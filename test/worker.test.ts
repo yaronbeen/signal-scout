@@ -39,6 +39,56 @@ test('trigger sends official bounded object schema and forwards visitor key only
   }));
   assert.deepEqual(await response.json(), { snapshot: 'sd_valid123' });
 });
+test('YouTube native keyword discovery uses its dataset and string post counts at every supported depth', async () => {
+  for (const depth of [5, 10, 20]) {
+    let calls = 0;
+    const response = await handleRequest(request('trigger', { platform: 'youtube', stage: 'discover', keywords: ['AI tools', 'Meta ads'], depth }), env, mock((target, init) => {
+      calls++;
+      const url = new URL(target);
+      assert.equal(url.origin, 'https://api.brightdata.com');
+      assert.equal(url.pathname, '/datasets/v3/trigger');
+      assert.equal(url.searchParams.get('dataset_id'), 'gd_lk56epmy2i5g7lzu0k');
+      assert.equal(url.searchParams.get('type'), 'discover_new');
+      assert.equal(url.searchParams.get('discover_by'), 'keyword');
+      assert.equal(url.searchParams.get('include_errors'), 'true');
+      assert.deepEqual(JSON.parse(String(init?.body)), { input: [{ keyword: 'AI tools', num_of_posts: String(depth) }, { keyword: 'Meta ads', num_of_posts: String(depth) }], limit_per_input: depth });
+      return reply({ snapshot_id: 'sd_youtube123' });
+    }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { snapshot: 'sd_youtube123' });
+    assert.equal(calls, 1);
+  }
+});
+test('all five profile triggers pin datasets, canonical inputs and one-row limits without discovery expansion', async () => {
+  const fixtures = [
+    { platform: 'youtube', url: 'https://youtube.com/@Maker/videos?tracking=1', input: { url: 'https://www.youtube.com/@maker/about' }, dataset: 'gd_lk538t2k2p1k3oos71' },
+    { platform: 'instagram', url: 'https://instagram.com/Maker?tracking=1', input: { url: 'https://www.instagram.com/maker/' }, dataset: 'gd_l1vikfch901nx3by4' },
+    { platform: 'tiktok', url: 'https://tiktok.com/@Maker', input: { url: 'https://www.tiktok.com/@maker' }, dataset: 'gd_l1villgoiiidt09ci' },
+    { platform: 'linkedin', url: 'https://uk.linkedin.com/in/Maker/', input: { url: 'https://www.linkedin.com/in/maker/' }, dataset: 'gd_l1viktl72bvl7bjuj0' },
+    { platform: 'x', url: 'https://twitter.com/Maker', input: { url: 'https://x.com/maker', max_number_of_posts: 3 }, dataset: 'gd_lwxmeb2u1cniijd7t4' },
+  ];
+  for (const fixture of fixtures) {
+    for (const depth of [5, 10, 20]) {
+      const response = await handleRequest(request('trigger', { platform: fixture.platform, stage: 'enrich', urls: [fixture.url, fixture.url], depth }), env, mock((target, init) => {
+        const url = new URL(target);
+        assert.equal(url.searchParams.get('dataset_id'), fixture.dataset);
+        assert.equal(url.searchParams.has('type'), false);
+        assert.equal(url.searchParams.has('discover_by'), false);
+        assert.equal((init?.headers as Record<string, string>).Authorization, `Bearer ${token}`);
+        assert.deepEqual(JSON.parse(String(init?.body)), { input: [fixture.input], limit_per_input: 1 });
+        return reply({ snapshot_id: 'sd_profile123' });
+      }));
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { snapshot: 'sd_profile123' });
+    }
+    for (const urls of [[], Array(6).fill(fixture.url), ['https://evil.test/maker']]) {
+      let dispatched = false;
+      const response = await handleRequest(request('trigger', { platform: fixture.platform, stage: 'enrich', urls, depth: 5 }), env, mock(() => { dispatched = true; return reply({}); }));
+      assert.equal(response.status, 400);
+      assert.equal(dispatched, false);
+    }
+  }
+});
 test('post collectors constrain platform URLs, dataset and paid row limits', async () => {
   for(const [platform,url,dataset] of [['instagram','https://instagram.com/p/abc','gd_lk5ns7kz21pck8jpis'],['linkedin','https://linkedin.com/posts/author-activity-123','gd_lyy3tktm25m4avu764'],['x','https://twitter.com/maker/status/123','gd_lwxkxvnf1cynvib9co']]) {
     const response=await handleRequest(request('trigger',{platform,stage:'posts',urls:[url],depth:5}),env,mock((target,init)=>{
@@ -49,7 +99,21 @@ test('post collectors constrain platform URLs, dataset and paid row limits', asy
 });
 test('connection detects active zones and returns no account data or keys', async () => {
   const response = await handleRequest(request('connect', {}), env, mock(() => reply([{ name: 'disabled', type: 'serp', status: 'disabled' }, { name: 'search', type: 'serp', status: 'active' }, { name: 'unlocker', type: 'unblocker', status: 'active' }])));
-  assert.deepEqual(await response.json(), { connected: true, searchAvailable: true, searchZones: ['search'], unlockerZone: 'unlocker' });
+  assert.deepEqual(await response.json(), { connected: true, metadataAvailable: true, searchAvailable: true, searchZones: ['search'], unlockerZone: 'unlocker' });
+});
+test('connect distinguishes restricted metadata from a known empty zone list without any paid checks', async () => {
+  for (const status of [200, 403]) {
+    const calls: string[] = [];
+    const response = await handleRequest(request('connect', {}), env, mock(url => {
+      calls.push(url);
+      return status === 403 ? reply({ error: 'Restricted fixture account metadata' }, 403) : reply([]);
+    }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { connected: true, metadataAvailable: status !== 403, searchAvailable: false, searchZones: [], unlockerZone: '' });
+    assert.deepEqual(calls, ['https://api.brightdata.com/zone/get_all_zones']);
+  }
+  const invalid = await handleRequest(request('connect', {}), env, mock(() => reply({ error: 'Invalid key' }, 401)));
+  assert.equal(invalid.status, 401);
 });
 test('SERP discovery detects user zone, pins query to platform and preserves organic evidence', async () => {
   let calls = 0;

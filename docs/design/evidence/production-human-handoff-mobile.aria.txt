@@ -1,0 +1,287 @@
+- banner:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - navigation "Main navigation":
+    - button "Discover"
+    - button "Your shortlist 1"
+    - button "Recent searches"
+  - button "Connect Bright Data"
+- main:
+  - img
+  - strong: AI tools & automation
+  - text: YouTube · Instagram · TikTok · LinkedIn · X · Up to 5 profiles / platform
+  - button "Edit search"
+  - button "New search"
+  - button "Explore a sample":
+    - img
+    - text: Explore a sample
+  - heading "Meet your next collaborators." [level=2]
+  - paragraph:
+    - strong: 8 sample creators
+    - text: · 5 with public email · 5 platforms
+  - button "Export CSV 8":
+    - img
+    - text: Export CSV 8
+  - img
+  - strong: Sample workspace
+  - text: Fictional creators and illustrative metrics. Contacts are illustrative. No live data or paid calls.
+  - paragraph: Topic matches are evidence signals, not audience-fit or campaign-performance scores.
+  - text: Platform
+  - combobox "Filter by platform":
+    - option "All creators (8)" [selected]
+    - option "YouTube (2)"
+    - option "Instagram (2)"
+    - option "TikTok (2)"
+    - option "LinkedIn (1)"
+    - option "X (1)"
+  - img
+  - textbox "Filter creators":
+    - /placeholder: Search name or bio
+  - checkbox "Has email"
+  - text: Has email
+  - combobox "Minimum audience":
+    - option "Any audience size" [selected]
+    - option "1K+ followers / subscribers"
+    - option "10K+ followers / subscribers"
+    - option "100K+ followers / subscribers"
+  - combobox "Sort creators":
+    - option "Content relevance" [selected]
+    - option "Audience size"
+    - option "Email available"
+  - article:
+    - text: TikTok
+    - heading "Jordan Ellis" [level=3]
+    - text: "@jordantechtalk"
+    - button "Save Jordan Ellis":
+      - img
+    - paragraph: Your friendly neighborhood tech explainer. Making AI a little less intimidating, one video at a time.
+    - button "Illustrative topic match · AI tools / automation AI tools that actually earn their place in your stack":
+      - text: Illustrative topic match · AI tools / automation AI tools that actually earn their place in your stack
+      - img
+    - strong: 128K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: LB YouTube
+    - heading "Lena Brooks" [level=3]
+    - text: "@lenalabs"
+    - button "Save Lena Brooks":
+      - img
+    - paragraph: Thoughtful tech reviews for real working days. Honest walkthroughs of AI tools and productivity systems.
+    - button "Illustrative topic match · AI tools / automation An honest look at AI-powered research tools":
+      - text: Illustrative topic match · AI tools / automation An honest look at AI-powered research tools
+      - img
+    - strong: 56.7K
+    - text: subscribers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: YouTube
+    - heading "Maya Chen" [level=3]
+    - text: "@mayamakes"
+    - button "Remove Maya Chen" [pressed]:
+      - img
+    - paragraph: I turn complicated AI tools into practical workflows. Weekly tutorials for founders, marketers, and curious builders.
+    - button "Illustrative topic match · AI tools / automation AI workflows for a one-person marketing team":
+      - text: Illustrative topic match · AI tools / automation AI workflows for a one-person marketing team
+      - img
+    - strong: 84.2K
+    - text: subscribers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: Instagram
+    - heading "Alex Rivera" [level=3]
+    - text: "@buildwithalex"
+    - button "Save Alex Rivera":
+      - img
+    - paragraph: Building better systems for small businesses. AI tools, automation, and the occasional coffee experiment.
+    - button "Illustrative topic match · AI tools / automation Three automations I use every single day":
+      - text: Illustrative topic match · AI tools / automation Three automations I use every single day
+      - img
+    - strong: 42.6K
+    - text: followers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: PK LinkedIn
+    - heading "Priya Kapoor" [level=3]
+    - text: "@priyagrowth"
+    - button "Save Priya Kapoor":
+      - img
+    - paragraph: Growth advisor for early-stage SaaS. Writing about AI, lean marketing teams, and systems that scale.
+    - button "Illustrative topic match · AI tools / automation What a lean marketing stack looks like in practice":
+      - text: Illustrative topic match · AI tools / automation What a lean marketing stack looks like in practice
+      - img
+    - strong: 31.6K
+    - text: followers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: SF X
+    - heading "Sam Foster" [level=3]
+    - text: "@samships"
+    - button "Save Sam Foster":
+      - img
+    - paragraph: Indie builder. Testing automation tools in public. Notes on growing a small internet business.
+    - button "Illustrative topic match · AI tools / automation My favorite AI workflow this week":
+      - text: Illustrative topic match · AI tools / automation My favorite AI workflow this week
+      - img
+    - strong: 18.7K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: TP Instagram
+    - heading "Theo Park" [level=3]
+    - text: "@theotools"
+    - button "Save Theo Park":
+      - img
+    - paragraph: A little tech, a little design. Tools that help creative people get their time back.
+    - button "Illustrative topic match · AI tools / automation My five favorite AI shortcuts for content creation":
+      - text: Illustrative topic match · AI tools / automation My five favorite AI shortcuts for content creation
+      - img
+    - strong: 23.8K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: NW TikTok
+    - heading "Nora Williams" [level=3]
+    - text: "@noraworks"
+    - button "Save Nora Williams":
+      - img
+    - paragraph: Marketing without the chaos. Automation ideas for e-commerce founders and solo marketers.
+    - button "Illustrative topic match · AI tools / automation Turn one product shoot into a week of content":
+      - text: Illustrative topic match · AI tools / automation Turn one product shoot into a week of content
+      - img
+    - strong: 67.3K
+    - text: followers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - img
+  - text: Sample data is fictional and intended to demonstrate the workspace. Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - button "Setup guide":
+    - text: Setup guide
+    - img
+- dialog "From a signal to a shortlist.":
+  - heading "From a signal to a shortlist." [level=2]
+  - button "Close dialog":
+    - img
+  - text: "01"
+  - heading "Connect your Bright Data key" [level=3]
+  - paragraph: Use the checklist below to enable the required services. Enter your own key in the app. On this website it passes through the relay to Bright Data; your account pays for collection. Choose your search zone after connecting.
+  - text: "02"
+  - heading "Describe your ideal creator" [level=3]
+  - paragraph: Enter up to three specific topics or keywords separated by commas. Start with focused depth.
+  - text: "03"
+  - heading "Inspect the evidence" [level=3]
+  - paragraph: Bright Data finds YouTube/TikTok content by topic. Instagram/LinkedIn/X search both profiles and posts, collect bounded post evidence to identify authors, then enrich profiles. Matching authored posts rank above profile or search-only evidence.
+  - text: "04"
+  - heading "Keep the good fits" [level=3]
+  - paragraph: Save creators, filter the results, and export a CSV with public emails and source links. Shortlists and briefs stay in this browser.
+  - strong: Real data has gaps.
+  - paragraph: Some creators have no public email, some metrics aren’t visible, and platforms can fail independently. We show what was found and preserve useful partial results. Topic signals are transparent keyword matches.
+  - region "Bright Data setup steps":
+    - heading "Your Bright Data checklist" [level=3]
+    - list:
+      - listitem:
+        - strong: Create your account and check credits.
+        - text: Live searches are billed to your Bright Data account.
+        - link "Create an account":
+          - /url: https://brightdata.com
+        - text: ·
+        - link "Check pricing":
+          - /url: https://brightdata.com/pricing
+      - listitem:
+        - strong: Enable Web Scraper API access for your key.
+        - text: Required to collect creator profiles on all five platforms and discover YouTube/TikTok content.
+        - link "Web Scraper API guide":
+          - /url: https://docs.brightdata.com/products/scrapers/overview
+      - listitem:
+        - strong: Set up a SERP API search zone for Instagram, LinkedIn & X.
+        - text: A zone is a named search service in your Bright Data account. After connecting, choose it in the search form. “Active” does not guarantee it can complete a search.
+        - link "Set up search for Instagram, LinkedIn & X":
+          - /url: https://docs.brightdata.com/scraping-automation/serp-api/quickstart
+      - listitem:
+        - strong: "Optional: enable Web Unlocker."
+        - text: Only needed for the “Scan website” email check, which is separately billed. Profile email discovery works without it.
+        - link "Website scan setup":
+          - /url: https://docs.brightdata.com/scraping-automation/web-unlocker/quickstart
+      - listitem:
+        - strong: Copy your API key and enter it here.
+        - text: Use your own key, only in the app’s key field.
+        - link "Find your API key":
+          - /url: https://brightdata.com/cp/setting/users
+  - strong: What each platform searches
+  - list:
+    - listitem:
+      - strong: "YouTube:"
+      - text: keyword video search via Bright Data → deduplicate channels → collect channel profiles. Evidence comes from video titles/descriptions and profile text.
+    - listitem:
+      - strong: "TikTok:"
+      - text: keyword post search via Bright Data → deduplicate creators → collect profiles. Evidence comes from returned captions/descriptions and profile bios.
+    - listitem:
+      - strong: "Instagram:"
+      - text: Google topic searches for profiles and posts/reels → collect discovered posts with the Instagram scraper → identify their authors → collect profiles.
+    - listitem:
+      - strong: "LinkedIn:"
+      - text: Google topic searches for personal profiles and posts → collect posts with the LinkedIn scraper → identify personal-profile authors → collect profiles.
+    - listitem:
+      - strong: "X:"
+      - text: Google topic searches on the legacy twitter.com index for profiles and status pages → collect posts with the X scraper → identify authors → collect x.com profiles.
+  - paragraph: No “creator” keyword is required and there is no dedicated hashtag crawler. Topic matches require every word of the term in one name, bio, or evidence item (not necessarily as an exact phrase). Matching collected posts rank first. Search-only matches stay labeled; Google indexing and bounded samples can miss relevant people.
+  - strong: Using the live website
+  - paragraph: No installation is needed. Connect your own key, choose your search zone, and search. No owner key is provided. After a refresh, reconnect your key and use Resume search. Resume can start separately billed post or profile stages; existing snapshots are checked without resubmission. Closing the tab may lose results and job references; export results and keep snapshot IDs first. Do not repeat an unresolved paid search until you check your Bright Data usage.
+  - img
+  - strong: Prefer to run it locally?
+  - heading "For your coding agent" [level=3]
+  - paragraph: Open Claude Code, OpenCode, or Cursor and paste this. The agent starts the app and explains your remaining steps.
+  - code: "Clone https://github.com/yaronbeen/signal-scout and read AGENTS.md. Check Git and Node.js 22+; explain or install missing prerequisites with my permission. Run npm ci and npm run check, start npm run dev as a persistent process, verify http://localhost:8787/api/health has ok: true, and open http://localhost:8787. Then give me the human setup steps: create a Bright Data account with available credits and Web Scraper API access, enable a SERP API zone for Instagram/LinkedIn/X, optionally enable Web Unlocker for website email scans, enter my key only in the app, and select a working search zone. Explain that connecting checks account metadata, not whether every paid service works. Keep the server running; after refresh I reconnect my key and resume existing jobs. Resume can start separately billed post or profile collection; it does not repeat submitted snapshot jobs. Current results and job references last for this browser tab; export results and keep snapshot IDs before closing it. Do not request my key in chat, store it, configure a hosted key, or submit paid test searches without asking me. No Cloudflare login is needed locally."
+  - button "Copy setup prompt":
+    - img
+    - text: Copy setup prompt
+  - 'heading "For you: once the agent finishes" [level=3]'
+  - list:
+    - listitem: Complete the Bright Data checklist above. The agent cannot supply your account, credits, or API key.
+    - listitem:
+      - text: Open
+      - link "http://localhost:8787":
+        - /url: http://localhost:8787
+      - text: ", click Connect Bright Data, and enter your key there."
+    - listitem: Select a working search zone for Instagram, LinkedIn & X, choose topics/platforms, and start your search.
+    - listitem: Keep the local server running. If you refresh, reconnect your key and resume saved jobs. Resume can start separately billed post or profile stages; existing snapshots are checked without resubmission.
+    - listitem: Before closing the tab, export results and keep snapshot IDs. Tab-local results and job references may be lost after closing; submitted Bright Data jobs may still run and be billed.
+  - paragraph: "Local prerequisites: Git and Node.js 22+. No Cloudflare login is required locally. You can explore a fictional sample without a key."

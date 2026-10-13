@@ -40,6 +40,7 @@ export function isCreator(value: unknown): value is Creator {
     ].every((k) => typeof c[k as keyof Creator] === "string") &&
     (c.followers === null || typeof c.followers === "number") &&
     typeof c.verified === "boolean" &&
+    (c.profileStatus === undefined || ['pending', 'complete', 'partial'].includes(c.profileStatus)) &&
     Array.isArray(c.websites) &&
     c.websites.every((w) => typeof w === "string") &&
     Array.isArray(c.matchedTerms) &&

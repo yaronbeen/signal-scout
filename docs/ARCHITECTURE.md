@@ -64,3 +64,11 @@ The Google scraper accepted requests but was too slow for interactive discovery.
 All selected platform descriptors are saved before execution. Credential-free current results, queued jobs, ready-for-enrichment candidates and submitted snapshot IDs use session storage. Paid trigger POSTs are preceded by an uncertain descriptor. Explicit 4xx rejections may resume the rejected stage; transport failures and 5xx outcomes require dashboard reconciliation and never auto-replay. Pausing prevents the next paid stage but does not cancel already submitted upstream jobs. Sample mode is unavailable during live recovery.
 
 Post collection adds `posts-ready` and `posts` descriptors containing bounded, credential-free post URLs. Uncertain post submissions can be reconciled to the existing snapshot. Resuming post collection preserves prior profile candidates and does not repeat SERP searches or submitted post triggers. Matching post text and returned author identity are required for content attribution; quoted/comment text is not used to qualify an author.
+
+## 18. Clear Signal workspace
+
+The approved redesign uses horizontal navigation, a split first-arrival composer, and an evidence-first results workspace. Results replace the arrival hero with an editable brief ribbon; editing never triggers paid work. Recovery remains independently usable when the composer is hidden, including required explicit zone choice. Complete provider/local setup, tab-local storage lifetime, separate paid-stage disclosures, and honest pending/partial card states are product requirements, not optional visual detail. See [the design blueprint](design/WORLD_CLASS_REDESIGN.md) and [iteration evidence](design/ITERATIONS.md).
+
+## 19. Evidence and state truth
+
+Profile collection state is stored on the creator, independently of a platform's remaining jobs, so saving or discarding references cannot manufacture a completed profile. Unknown legacy state is not treated as success. Content evidence contains actual authored title/caption/post text; profile biography retains a profile source. Relevance previews select supporting evidence rather than the first returned content item. Account connection distinguishes available metadata from restricted metadata; an inaccessible zone list is not proof that no zones exist.

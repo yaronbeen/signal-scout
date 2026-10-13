@@ -41,7 +41,6 @@ test('pause during discovery prevents paid enrichment; resume preserves shortlis
   expect(enrichmentCalls).toBe(1);
   await page.reload();
   await expect(page.locator('.creator-card').getByRole('heading', { name: 'Maker Enriched' })).toBeVisible();
-  if (test.info().project.name === 'mobile') await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('button', { name: /Your shortlist/ }).click();
   await expect(page.locator('.creator-card').getByRole('heading', { name: 'Maker Enriched' })).toBeVisible();
   await expect(page.locator('.creator-card').getByText('Public email', { exact: true })).toBeVisible();
@@ -118,6 +117,7 @@ test('queued platforms survive pause and reload, and never mix sample/live resul
     }
   });
   await page.goto('/'); await page.getByRole('button', { name: /Explore a sample/ }).click(); await connect(page);
+  await page.getByRole('button', { name: 'Edit search', exact: true }).click();
   await page.getByLabel('Topic or keyword', { exact: true }).fill('AI tools');
   for (const p of ['YouTube', 'TikTok']) await page.locator('.search-panel').getByRole('button', { name: p, exact: true }).click();
   await page.getByRole('main').getByRole('button', { name: 'Discover creators', exact: true }).click();

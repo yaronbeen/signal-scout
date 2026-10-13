@@ -192,6 +192,7 @@ function emptyCreator(platform: Platform, url: string): Creator {
     evidence: [],
     matchedTerms: [],
     collectedAt: new Date().toISOString(),
+    profileStatus: 'pending',
   };
 }
 function addContacts(
@@ -215,6 +216,19 @@ export function matchesTopic(value: string, term: string): boolean {
 export function contentSignals(c: Creator): Evidence[] {
   return c.evidence.filter(e => e.kind === 'content' && c.matchedTerms.some(term => matchesTopic(e.text, term)));
 }
+function evidenceDate(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    const raw = text(value).trim();
+    if (!raw) continue;
+    // Native schemas return dates; historical payloads also use Unix seconds or milliseconds.
+    const numeric = /^\d+(?:\.\d+)?$/.test(raw) ? Number(raw) : null;
+    const time = numeric !== null
+      ? numeric * (numeric < 1e12 ? 1000 : 1)
+      : Date.parse(raw);
+    if (Number.isFinite(time) && Number.isFinite(new Date(time).getTime()))
+      return new Date(time).toISOString();
+  }
+}
 export function relevanceScore(c: Creator): number {
   const content = contentSignals(c);
   const profile = c.evidence.some(e => e.kind === 'profile' && c.matchedTerms.some(t => matchesTopic(e.text, t)));
@@ -233,10 +247,20 @@ export function relevanceLabel(c: Creator): string {
   if (c.evidence.some(e => e.kind === 'profile' && c.matchedTerms.some(t => matchesTopic(e.text, t)))) return 'Profile topic match';
   return c.matchedTerms.length ? 'Search evidence only' : 'Review topic fit';
 }
+function hasRepostContent(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return Number.isFinite(value) && value !== 0;
+  if (Array.isArray(value)) return value.some(hasRepostContent);
+  if (value && typeof value === 'object') return Object.values(value).some(hasRepostContent);
+  return false;
+}
 export function creatorsFromPosts(platform: Platform, records: RawRecord[], urls: string[], keywords: string[]): Creator[] {
   const mapped: RawRecord[] = [];
   for (const r of records) {
-    if (r.error || r.is_repost === true || (r.repost && typeof r.repost === 'object')) continue;
+    // LinkedIn original posts also include a repost object with null/empty schema
+    // fields. Only populated reshare metadata (or an explicit flag) establishes a repost.
+    if (r.error || r.is_repost === true || hasRepostContent(r.repost)) continue;
     const post = canonicalPost(platform, r.url);
     const input = r.input && typeof r.input === 'object' ? r.input as RawRecord : {};
     const requested = canonicalPost(platform, r.input_url || input.url);
@@ -283,7 +307,7 @@ export function discoverCandidates(
         "profile_image_link",
       ),
     );
-    if (evidence.url && !c.evidence.some((e) => e.url === evidence.url))
+    if (evidence.url && !c.evidence.some((e) => e.url === evidence.url && e.kind === evidence.kind))
       c.evidence.push(evidence);
     // Search snippets can mention unrelated contacts; only attribute contacts from native creator content.
     if (evidence.kind === "content")
@@ -310,12 +334,20 @@ export function discoverCandidates(
         platform === "youtube"
           ? pick(record, "channel_url", "channel_url_decoded")
           : pick(record, "profile_url", "author_url", "url");
+      const publishedAt = evidenceDate(record.date_posted, record.create_time);
       add(url, record, {
         url: safeUrl(record.url),
-        text: `${pick(record, "title")} ${pick(record, "description", "profile_biography")}`.trim(),
+        text: `${pick(record, "title")} ${pick(record, "description", "caption", "post_text")}`.trim(),
         kind: "content",
-        ...(Number.isFinite(Date.parse(pick(record, 'date_posted'))) ? { publishedAt: pick(record, 'date_posted') } : {}),
+        ...(publishedAt ? { publishedAt } : {}),
       });
+      const bio = pick(record, "profile_biography");
+      if (bio) {
+        const profile = canonicalProfile(platform, url);
+        add(url, record, { url: profile, text: bio, kind: "profile" });
+        const creator = map.get(profile);
+        if (creator) addContacts(creator, bio, profile, "Public profile");
+      }
     }
   }
   return [...map.values()].sort(compareRelevance).slice(0, depth);
@@ -338,11 +370,13 @@ export function enrichCreators(
     if (!url) continue;
     const c = map.get(url)!;
     if (r.error) {
+      c.profileStatus = 'partial';
       c.enrichmentError =
         "Profile could not be collected. Discovery evidence is available.";
       continue;
     }
     matched.add(url);
+    c.profileStatus = 'complete';
     delete c.enrichmentError;
     c.name =
       pick(r, "name", "Name", "full_name", "nickname", "profile_name") ||
@@ -413,18 +447,24 @@ export function enrichCreators(
     );
     const headline = pick(r, "position", "headline");
     if (headline && !c.bio.includes(headline)) c.bio = `${headline}. ${c.bio}`;
-    if (profileBio)
+    if (profileBio) {
+      // Native discovery may already contain this profile's biography. Keep
+      // one current version per profile source while retaining post/search evidence.
+      c.evidence = c.evidence.filter(e => e.kind !== "profile" || canonicalProfile(platform, e.url) !== c.url);
       c.evidence.unshift({ url: c.url, text: profileBio, kind: "profile" });
+    }
     c.matchedTerms = matchingTerms(c, keywords);
     c.collectedAt = new Date().toISOString();
     map.set(url, c);
   }
   return [...map.values()].map((c) =>
-    matched.has(c.url) || c.enrichmentError
+    matched.has(c.url)
       ? c
       : {
           ...c,
+          profileStatus: 'partial',
           enrichmentError:
+            c.enrichmentError ||
             "No matching profile was returned. Discovery evidence is available.",
         },
   );
@@ -434,9 +474,11 @@ export function mergeCreators(
   incoming: Creator[],
 ): Creator[] {
   const map = new Map(current.map((c) => [c.id, c]));
+  const sameEvidenceSource = (platform: Platform, a: Evidence, b: Evidence) =>
+    a.kind === b.kind && (a.url === b.url || (a.kind === 'profile' && !!canonicalProfile(platform, a.url) && canonicalProfile(platform, a.url) === canonicalProfile(platform, b.url)));
   incoming.forEach((c) => {
     const old = map.get(c.id);
-    map.set(c.id, old ? { ...c, evidence: [...c.evidence, ...old.evidence.filter(e => !c.evidence.some(n => n.url === e.url && n.kind === e.kind))], contacts: [...c.contacts, ...old.contacts.filter(contact => !c.contacts.some(n => n.email === contact.email))] } : c);
+    map.set(c.id, old ? { ...c, evidence: [...c.evidence, ...old.evidence.filter(e => !c.evidence.some(n => sameEvidenceSource(c.platform, e, n)))], contacts: [...c.contacts, ...old.contacts.filter(contact => !c.contacts.some(n => n.email === contact.email))] } : c);
   });
   return [...map.values()];
 }
@@ -464,6 +506,7 @@ export function toCsv(creators: Creator[]): string {
     "evidence_url",
     "collected_at",
     "sample",
+    "collection_status",
   ];
   const escape = (v: unknown) => {
     let s = String(v ?? "");
@@ -486,6 +529,7 @@ export function toCsv(creators: Creator[]): string {
     c.evidence.map((e) => e.url).join("; "),
     c.collectedAt,
     c.sample ? "yes" : "no",
+    c.sample ? "sample" : c.profileStatus || "unknown",
   ]);
   return (
     "\uFEFF" +

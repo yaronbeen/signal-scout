@@ -1,0 +1,258 @@
+[
+  {
+    "device": "desktop",
+    "state": "home",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "results",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "details",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "dialog-feedback",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "detail-contact",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "connection",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "checklist",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "setup-guide",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "coding-agent",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "human-handoff",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "connected",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "recovery",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "partial-details",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "partial-contact",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "metadata-restricted",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "desktop",
+    "state": "metadata-restricted-scan",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "home",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "results",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "details",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "dialog-feedback",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "detail-contact",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "connection",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "checklist",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "setup-guide",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "coding-agent",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "human-handoff",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "connected",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "recovery",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "partial-details",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "partial-contact",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "metadata-restricted",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "state": "metadata-restricted-scan",
+    "body": false,
+    "document": false,
+    "surfaces": [],
+    "errors": []
+  }
+]

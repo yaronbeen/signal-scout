@@ -1,4 +1,4 @@
-/** Exercises the shipping Worker and normalization code with real Bright Data data. */
+/** Legacy discovery/profile verification. Does not exercise content-first post collection or website retrieval. */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { handleRequest } from '../worker/index';
@@ -70,4 +70,5 @@ for (const platform of platforms) {
  } catch (e) { console.log(platform, 'FAILED', e); summaries.push({ status: 'rejected', reason: String(e) }); }
 }
 await writeFile('docs/live-private/summary.json', JSON.stringify(summaries, null, 2));
-console.log(summaries.every(s => s.status === 'fulfilled') ? 'ALL FIVE PIPELINES VERIFIED' : 'SOME PIPELINES NEED ATTENTION', summaries.filter(s => s.status === 'rejected'));
+console.log(summaries.every(s => s.status === 'fulfilled') ? 'LEGACY DISCOVERY/PROFILE ADAPTER CHECKS PASSED' : 'LEGACY DISCOVERY/PROFILE CHECKS NEED ATTENTION', summaries.filter(s => s.status === 'rejected'));
+console.log('Coverage: native discovery captures may be reused; hybrid SERP discovery/profile enrichment only. Content-first post collection and website retrieval are not exercised by this script. This is not an all-platform content-first verification.');

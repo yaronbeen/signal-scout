@@ -22,6 +22,7 @@ export interface Creator {
   collectedAt: string;
   sample?: boolean;
   enrichmentError?: string;
+  profileStatus?: 'pending' | 'complete' | 'partial';
 }
 export interface SearchConfig { brief: string; keywords: string[]; platforms: Platform[]; depth: number }
 export interface PlatformProgress { phase: 'idle' | 'discovering' | 'enriching' | 'done' | 'error'; message: string; count: number; startedAt?: number; snapshot?: string }

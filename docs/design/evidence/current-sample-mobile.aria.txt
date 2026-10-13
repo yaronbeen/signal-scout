@@ -1,0 +1,345 @@
+- complementary:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - text: "Y"
+  - strong: Your workspace
+  - text: Saved in this browser WORKSPACE
+  - navigation "Main navigation":
+    - button "Discover creators":
+      - img
+      - text: Discover creators
+      - img
+    - button "Your shortlist 0":
+      - img
+      - text: Your shortlist 0
+    - button "Recent searches":
+      - img
+      - text: Recent searches
+  - img
+  - strong: Your next great partnership starts with a signal.
+  - paragraph: Real profiles. Public contacts. Your own data, on your terms.
+  - button "Take a quick tour":
+    - text: Take a quick tour
+    - img
+  - button "How it works":
+    - img
+    - text: How it works
+  - link "Run it locally":
+    - /url: https://github.com/yaronbeen/signal-scout
+    - img
+    - text: Run it locally
+    - img
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+- banner:
+  - button "Open navigation":
+    - img
+  - strong: Discover creators
+  - button "Connect Bright Data":
+    - img
+    - text: Connect Bright Data
+- main:
+  - text: FIVE-PLATFORM CREATOR RESEARCH
+  - heading "Find your people. Make some noise." [level=1]
+  - paragraph: Discover creators across five platforms with Bright Data. Review profile evidence, find public emails, and export your shortlist.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - paragraph:
+    - text: Live searches require your own Bright Data account, API key and credits.
+    - button "Setup guide"
+  - text: 5 platforms. One search.
+  - img
+  - text: Your key. Your data. 01
+  - heading "Who are you looking for?" [level=2]
+  - button "Explore a sample":
+    - text: Explore a sample
+    - img
+  - text: Topic or keyword · up to 3, separated by commas
+  - img
+  - textbox "Topic or keyword":
+    - /placeholder: Try “AI tools”, “sustainable skincare”, or “B2B marketing”
+    - text: AI tools, automation
+  - text: "A little inspiration:"
+  - button "AI & automation":
+    - text: AI & automation
+    - img
+  - button "Skincare creators":
+    - text: Skincare creators
+    - img
+  - button "SaaS & startups":
+    - text: SaaS & startups
+    - img
+  - text: Search across
+  - button "YouTube" [pressed]:
+    - text: YouTube
+    - img
+  - button "Instagram" [pressed]:
+    - text: Instagram
+    - img
+  - button "TikTok" [pressed]:
+    - text: TikTok
+    - img
+  - button "LinkedIn" [pressed]:
+    - text: LinkedIn
+    - img
+  - button "X" [pressed]:
+    - text: X
+    - img
+  - text: Search depth
+  - combobox "Search depth":
+    - option "Focused · up to 5 / platform" [selected]
+    - option "Balanced · up to 10 / platform"
+    - option "Broader · up to 20 / platform"
+  - img
+  - img
+  - text: Public data only. Usage billed to your Bright Data account.
+  - button "Discover creators":
+    - img
+    - text: Discover creators
+    - img
+  - paragraph:
+    - text: "Up to 5 profiles per platform. YouTube/TikTok: up to 5 posts per topic. Instagram/LinkedIn/X: 2 search pages per topic (profiles + content), then up to 5 discovered posts per platform to identify authors. Search, post collection and profile collection are separate paid stages."
+    - link "View pricing":
+      - /url: https://brightdata.com/pricing
+      - text: View pricing
+      - img
+  - heading "Meet your next collaborators." [level=2]
+  - paragraph:
+    - text: Signals for
+    - strong: AI tools & automation
+    - text: · Illustrative sample
+  - button "Export CSV":
+    - img
+    - text: Export CSV
+  - img
+  - strong: Sample workspace
+  - text: Fictional creators and illustrative metrics. Connect your key to collect real profiles.
+  - strong: 8 creators discovered
+  - strong: 5 with public email
+  - strong: 5 platforms represented
+  - group "Filter by platform":
+    - button "All creators 8" [pressed]
+    - button "YouTube 2"
+    - button "Instagram 2"
+    - button "TikTok 2"
+    - button "LinkedIn 1"
+    - button "X 1"
+  - checkbox "Has email"
+  - text: Has email
+  - img
+  - textbox "Filter creators":
+    - /placeholder: Filter by name or bio…
+  - img
+  - combobox "Minimum audience":
+    - option "Any audience size" [selected]
+    - option "1K+ followers / subscribers"
+    - option "10K+ followers / subscribers"
+    - option "100K+ followers / subscribers"
+  - text: "Sort:"
+  - combobox "Sort creators":
+    - option "Content relevance" [selected]
+    - option "Audience size"
+    - option "Email available"
+  - article:
+    - text: TikTok
+    - button "Save Jordan Ellis":
+      - img
+    - text: JE
+    - heading "Jordan Ellis" [level=3]
+    - text: "@jordantechtalk"
+    - paragraph: Your friendly neighborhood tech explainer. Making AI a little less intimidating, one video at a time.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 128K
+    - text: followers
+    - strong: No email found
+    - text: Website available
+    - button "AI tools that actually earn their place in your stack":
+      - img
+      - text: AI tools that actually earn their place in your stack
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: YouTube
+    - button "Save Lena Brooks":
+      - img
+    - text: LB
+    - heading "Lena Brooks" [level=3]
+    - text: "@lenalabs"
+    - paragraph: Thoughtful tech reviews for real working days. Honest walkthroughs of AI tools and productivity systems.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 56.7K
+    - text: subscribers
+    - strong: Public email
+    - text: Source available
+    - button "An honest look at AI-powered research tools":
+      - img
+      - text: An honest look at AI-powered research tools
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: YouTube
+    - button "Save Maya Chen":
+      - img
+    - text: MC
+    - heading "Maya Chen" [level=3]
+    - text: "@mayamakes"
+    - paragraph: I turn complicated AI tools into practical workflows. Weekly tutorials for founders, marketers, and curious builders.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 84.2K
+    - text: subscribers
+    - strong: Public email
+    - text: Source available
+    - button "AI workflows for a one-person marketing team":
+      - img
+      - text: AI workflows for a one-person marketing team
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: Instagram
+    - button "Save Alex Rivera":
+      - img
+    - text: AR
+    - heading "Alex Rivera" [level=3]
+    - text: "@buildwithalex"
+    - paragraph: Building better systems for small businesses. AI tools, automation, and the occasional coffee experiment.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 42.6K
+    - text: followers
+    - strong: Public email
+    - text: Source available
+    - button "Three automations I use every single day":
+      - img
+      - text: Three automations I use every single day
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: LinkedIn
+    - button "Save Priya Kapoor":
+      - img
+    - text: PK
+    - heading "Priya Kapoor" [level=3]
+    - text: "@priyagrowth"
+    - paragraph: Growth advisor for early-stage SaaS. Writing about AI, lean marketing teams, and systems that scale.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 31.6K
+    - text: followers
+    - strong: Public email
+    - text: Source available
+    - button "What a lean marketing stack looks like in practice":
+      - img
+      - text: What a lean marketing stack looks like in practice
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: X
+    - button "Save Sam Foster":
+      - img
+    - text: SF
+    - heading "Sam Foster" [level=3]
+    - text: "@samships"
+    - paragraph: Indie builder. Testing automation tools in public. Notes on growing a small internet business.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 18.7K
+    - text: followers
+    - strong: No email found
+    - text: Website available
+    - button "My favorite AI workflow this week":
+      - img
+      - text: My favorite AI workflow this week
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: Instagram
+    - button "Save Theo Park":
+      - img
+    - text: TP
+    - heading "Theo Park" [level=3]
+    - text: "@theotools"
+    - paragraph: A little tech, a little design. Tools that help creative people get their time back.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 23.8K
+    - text: followers
+    - strong: No email found
+    - text: Website available
+    - button "My five favorite AI shortcuts for content creation":
+      - img
+      - text: My five favorite AI shortcuts for content creation
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: TikTok
+    - button "Save Nora Williams":
+      - img
+    - text: NW
+    - heading "Nora Williams" [level=3]
+    - text: "@noraworks"
+    - paragraph: Marketing without the chaos. Automation ideas for e-commerce founders and solo marketers.
+    - text: Illustrative topic match
+    - img
+    - text: AI tools automation
+    - strong: 67.3K
+    - text: followers
+    - strong: Public email
+    - text: Source available
+    - button "Turn one product shoot into a week of content":
+      - img
+      - text: Turn one product shoot into a week of content
+      - img
+    - text: Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - img
+  - text: Sample data is fictional and intended to demonstrate the workspace. Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - text: /
+  - button "How it works":
+    - text: How it works
+    - img

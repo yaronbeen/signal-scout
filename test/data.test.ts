@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalPost, canonicalProfile, creatorsFromPosts, discoverCandidates, enrichCreators, extractEmails, matchingTerms, mergeCreators, number, relevanceLabel, relevanceScore, searchPostUrls, toCsv, websiteContacts } from '../src/data';
+import { canonicalPost, canonicalProfile, compareRelevance, contentSignals, creatorsFromPosts, discoverCandidates, enrichCreators, extractEmails, matchingTerms, mergeCreators, number, relevanceLabel, relevanceScore, searchPostUrls, toCsv, websiteContacts } from '../src/data';
 import { sampleCreators } from '../src/sample';
 
 test('canonical identities deduplicate profiles and reject non-profile and deceptive URLs', () => {
@@ -29,6 +29,69 @@ test('native content discovery deduplicates and preserves contact provenance', (
   const result = discoverCandidates('youtube', records, ['AI workflows'], 5);
   assert.equal(result.length, 1); assert.equal(result[0].evidence.length, 2); assert.equal(result[0].contacts[0].sourceUrl, records[0].url);
 });
+test('TikTok profile biographies are attributed to profiles and never counted as matching posts', () => {
+  for (const description of [undefined, 'A day at the beach']) {
+    const [creator] = discoverCandidates('tiktok', [{
+      profile_url: 'https://tiktok.com/@maker', url: 'https://tiktok.com/@maker/video/123',
+      profile_username: 'maker', profile_biography: 'Meta ads specialist deals@maker.io', description,
+    }], ['Meta ads'], 5);
+    assert.equal(contentSignals(creator).length, 0);
+    assert.equal(relevanceLabel(creator), 'Profile topic match');
+    assert.deepEqual(creator.evidence.find(e => e.kind === 'profile'), {
+      url: creator.url, text: 'Meta ads specialist deals@maker.io', kind: 'profile',
+    });
+    assert.equal(creator.contacts[0].sourceUrl, creator.url);
+    assert.equal(creator.contacts[0].source, 'Public profile');
+  }
+  const [creator] = discoverCandidates('tiktok', [{
+    profile_url: 'https://tiktok.com/@maker', url: 'https://tiktok.com/@maker/video/123',
+    description: 'Meta ads testing', profile_biography: 'Meta ads consultant',
+  }], ['Meta ads'], 5);
+  assert.equal(contentSignals(creator).length, 1);
+});
+test('TikTok creation dates accept documented dates and epoch variants and survive enrichment', () => {
+  const iso = '2026-10-01T12:00:00.000Z';
+  for (const create_time of [iso, 'Thu, 01 Oct 2026 12:00:00 GMT', Date.parse(iso) / 1000, String(Date.parse(iso) / 1000), Date.parse(iso), String(Date.parse(iso))]) {
+    const candidates = discoverCandidates('tiktok', [{ profile_url: 'https://tiktok.com/@maker', url: 'https://tiktok.com/@maker/video/123', description: 'Meta ads', create_time }], ['Meta ads'], 5);
+    assert.equal(contentSignals(candidates[0])[0].publishedAt, iso);
+    const [enriched] = enrichCreators('tiktok', [{ url: candidates[0].url, signature: 'Marketing' }], candidates, ['Meta ads']);
+    assert.equal(contentSignals(enriched)[0].publishedAt, iso);
+  }
+  for (const create_time of [undefined, null, '', 'not a date', {}, Infinity]) {
+    const [creator] = discoverCandidates('tiktok', [{ profile_url: 'https://tiktok.com/@maker', url: 'https://tiktok.com/@maker/video/123', description: 'Meta ads', create_time }], ['Meta ads'], 5);
+    assert.equal(creator.evidence[0].publishedAt, undefined);
+  }
+  const creators = discoverCandidates('tiktok', [
+    { profile_url: 'https://tiktok.com/@older', url: 'https://tiktok.com/@older/video/123', description: 'Meta ads', create_time: '2020-01-01' },
+    { profile_url: 'https://tiktok.com/@newer', url: 'https://tiktok.com/@newer/video/456', description: 'Meta ads', create_time: iso },
+  ], ['Meta ads'], 5).sort(compareRelevance);
+  assert.equal(creators[0].handle, '@newer');
+});
+test('TikTok enrichment replaces identical or changed native biography evidence without losing other sources', () => {
+  const [native] = discoverCandidates('tiktok', [{
+    profile_url: 'https://tiktok.com/@fixture', url: 'https://tiktok.com/@fixture/video/123',
+    profile_biography: 'Meta ads consultant', description: 'Meta ads testing', create_time: '2026-10-01',
+  }], ['Meta ads'], 5);
+  const candidate = { ...native, evidence: [...native.evidence,
+    { url: native.url, text: 'Meta ads search snippet', kind: 'search' as const },
+    { url: 'https://fixture.io/about', text: 'A separate source', kind: 'profile' as const },
+  ] };
+  const withAlias = { ...candidate, evidence: [...candidate.evidence, { url: 'https://tiktok.com/@FIXTURE?tracking=1', text: 'Stale duplicate biography', kind: 'profile' as const }] };
+  const aliasEnriched = enrichCreators('tiktok', [{ url: native.url, signature: 'Current biography' }], [withAlias], ['Meta ads']);
+  const [aliasMerged] = mergeCreators([withAlias], aliasEnriched);
+  assert.deepEqual(aliasMerged.evidence.filter(e => e.kind === 'profile' && canonicalProfile('tiktok', e.url) === native.url), [{ url: native.url, text: 'Current biography', kind: 'profile' }]);
+  let current = candidate;
+  for (const signature of ['Meta ads consultant', 'A changed current biography', 'A changed current biography']) {
+    const [enriched] = enrichCreators('tiktok', [{ url: native.url, signature }], [current], ['Meta ads']);
+    [current] = mergeCreators([current], [enriched]);
+    assert.deepEqual(current.evidence.filter(e => e.kind === 'profile' && e.url === native.url), [
+      { url: native.url, text: signature, kind: 'profile' },
+    ]);
+    assert.deepEqual(current.evidence.filter(e => !(e.kind === 'profile' && e.url === native.url)), candidate.evidence.filter(e => !(e.kind === 'profile' && e.url === native.url)));
+    assert.equal(contentSignals(current).length, 1);
+    assert.equal(contentSignals(current)[0].publishedAt, '2026-10-01T00:00:00.000Z');
+  }
+});
 test('search discovery rejects post-only Instagram URLs and does not attribute snippet emails', () => {
   const result = discoverCandidates('instagram', [{ organic: [
     { link: 'https://instagram.com/p/abc', title: 'AI creator' },
@@ -43,11 +106,38 @@ test('enrichment handles real profile schemas, errors, source links and missing 
   assert.equal(result[0].name, 'Maker Person'); assert.equal(result[0].followers, 0); assert.equal(result[0].contacts[0].sourceUrl, result[0].url); assert.deepEqual(result[0].websites, ['https://maker.io/contact']);
   assert.ok(result[1].enrichmentError); assert.equal(result[1].followers, null);
 });
+test('creator-specific enrichment state follows correlated success, error and missing profile rows', () => {
+  const candidates = discoverCandidates('instagram', [{ organic: ['complete', 'error', 'missing'].map(handle => ({ link: `https://instagram.com/${handle}/`, title: handle, description: 'Meta ads' })) }], ['Meta ads'], 5);
+  assert.ok(candidates.every(c => c.profileStatus === 'pending'));
+  const result = enrichCreators('instagram', [
+    { url: candidates[0].url, full_name: 'Collected Fixture', followers: 0 },
+    { input_url: candidates[1].url, error: 'dead_page' },
+  ], candidates, ['Meta ads']);
+  assert.deepEqual(result.map(c => c.profileStatus), ['complete', 'partial', 'partial']);
+  assert.equal(result[0].enrichmentError, undefined);
+  assert.equal(result[0].contacts.length, 0);
+  const retried = enrichCreators('instagram', [{ url: candidates[1].url, full_name: 'Recovered Fixture' }], [result[1]], ['Meta ads']);
+  assert.equal(retried[0].profileStatus, 'complete');
+  assert.equal(retried[0].enrichmentError, undefined);
+});
 test('CSV protects spreadsheet formulas and includes source provenance and sample labels', () => {
   const creator = { ...sampleCreators[0], name: '=HYPERLINK("bad")', bio: 'A, quote " and\nnewline', followers: null };
   const csv = toCsv([creator]);
   assert.ok(csv.includes('"\'=HYPERLINK(""bad"")"')); assert.ok(csv.includes('A, quote "" and\nnewline'));
-  assert.ok(csv.includes('email_source')); assert.ok(csv.endsWith('"yes"'));
+  assert.ok(csv.includes('email_source')); assert.ok(csv.endsWith('"yes","sample"'));
+});
+test('CSV explicitly exports pending, partial, complete, unknown legacy and sample collection states', () => {
+  const statuses = ['pending', 'partial', 'complete'] as const;
+  const creators = [
+    ...statuses.map(profileStatus => ({ ...sampleCreators[0], name: '=formula-fixture', bio: 'Export fixture', sample: false, contacts: [], evidence: [], profileStatus })),
+    { ...sampleCreators[0], name: 'Legacy fixture', bio: 'Export fixture', sample: false, contacts: [], evidence: [] },
+    { ...sampleCreators[0], name: 'Sample fixture', bio: 'Export fixture', profileStatus: 'complete' as const, contacts: [], evidence: [] },
+  ];
+  const [header, ...rows] = toCsv(creators).slice(1).split('\r\n');
+  assert.ok(header.endsWith('"collection_status"'));
+  assert.deepEqual(rows.map(row => row.match(/,"([^"]+)"$/)![1]), ['pending', 'partial', 'complete', 'unknown', 'sample']);
+  assert.ok(rows.slice(0, 3).every(row => row.startsWith('"\'=formula-fixture",')));
+  assert.ok(rows.every(row => row.split(',').length === header.split(',').length));
 });
 test('website extraction excludes tracking scripts but keeps visible email and mailto', () => {
   const result = websiteContacts('<script>var x="dev@tracker.com"</script><p>hello@maker.io</p><a href="mailto:book@maker.io">Contact</a>', 'https://maker.io/');
@@ -109,6 +199,43 @@ test('LinkedIn and X content collectors use returned authors and exclude reposts
   const x='https://x.com/maker/status/123';
   const twitter=creatorsFromPosts('x',[{url:'https://twitter.com/maker/status/123',user_posted:'@maker',description:'Meta ads insights'},{url:x,user_posted:'other',description:'Meta ads',is_repost:true}],[x],['Meta ads']);
   assert.equal(twitter.length,1);assert.equal(twitter[0].url,'https://x.com/maker');
+});
+test('LinkedIn empty repost schema placeholders preserve actual personal authors, dates and contacts', () => {
+  const url = 'https://www.linkedin.com/posts/fixture-author-activity-123';
+  const record = {
+    url, input: { url }, account_type: 'Person', use_url: 'https://linkedin.com/in/fixture-author/',
+    user_name: 'Fixture Author', post_text: 'AI tools for marketing', date_posted: '2026-10-01T12:00:00Z',
+  };
+  const placeholders = [undefined, null, false, '', {}, [], {
+    repost_hangtags: null, repost_attachments: null, tagged_users: null, tagged_companies: null,
+  }, {
+    repost_hangtags: [], repost_attachments: { images: [], videos: [{}] },
+    tagged_users: [null, { name: '', profile: {} }], tagged_companies: [],
+    is_repost: false, count: 0, description: '   ',
+  }];
+  for (const repost of placeholders) {
+    const candidates = creatorsFromPosts('linkedin', [{ ...record, repost }], [url], ['AI tools']);
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].url, 'https://www.linkedin.com/in/fixture-author/');
+    assert.equal(contentSignals(candidates[0]).length, 1);
+    assert.equal(contentSignals(candidates[0])[0].publishedAt, '2026-10-01T12:00:00.000Z');
+    const [enriched] = enrichCreators('linkedin', [{
+      url: candidates[0].url, about: 'Public contact booking@fixture-author.io', followers: 100,
+    }], candidates, ['AI tools']);
+    assert.equal(contentSignals(enriched).length, 1);
+    assert.equal(contentSignals(enriched)[0].publishedAt, '2026-10-01T12:00:00.000Z');
+    assert.deepEqual(enriched.contacts, [{ email: 'booking@fixture-author.io', sourceUrl: candidates[0].url, source: 'Public profile' }]);
+  }
+  for (const repost of [
+    { url: 'https://www.linkedin.com/posts/original-activity-456' },
+    { original_post_text: 'AI tools from another author' },
+    { original_author: { profile_url: 'https://linkedin.com/in/original-author/' } },
+    { repost_attachments: [{ images: [{ url: 'https://fixture-author.io/original.png' }] }] },
+    { is_repost: true },
+  ]) {
+    assert.deepEqual(creatorsFromPosts('linkedin', [{ ...record, repost }], [url], ['AI tools']), []);
+  }
+  assert.deepEqual(creatorsFromPosts('linkedin', [{ ...record, repost: {}, is_repost: true }], [url], ['AI tools']), []);
 });
 test('resolved post permalinks correlate to requested inputs and keep returned provenance', () => {
   const input='https://www.linkedin.com/feed/update/urn:li:activity:123';

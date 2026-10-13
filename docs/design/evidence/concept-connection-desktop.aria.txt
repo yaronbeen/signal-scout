@@ -1,0 +1,180 @@
+- strong: Clear Signal · Design concept
+- group "Concept screens":
+  - button "Home"
+  - button "Sample results" [pressed]
+- text: Responsive · Illustrative data only
+- banner:
+  - link "Signal Scout home":
+    - /url: "#home"
+    - text: signalscout.
+  - navigation "Workspace":
+    - button "Discover"
+    - button "Shortlist 1"
+    - button "Recent searches"
+  - button "Connect Bright Data":
+    - img
+    - text: Connect Bright Data
+- main:
+  - strong: AI tools & automation
+  - text: All five platforms · Focused depth
+  - button "Edit search"
+  - button "New search"
+  - heading "Meet your next collaborators." [level=1]
+  - paragraph:
+    - strong: 8 sample creators
+    - text: · 5 with public email · 5 platforms
+  - button "Export CSV":
+    - img
+    - text: Export CSV
+  - strong: Sample workspace
+  - text: Fictional creators, illustrative metrics and contacts. No live data or paid calls.
+  - group "Filter by platform":
+    - button "All creators 8" [pressed]
+    - button "YouTube 2"
+    - button "Instagram 2"
+    - button "TikTok 2"
+    - button "LinkedIn 1"
+    - button "X 1"
+  - textbox "Filter creators":
+    - /placeholder: Search name or bio
+  - checkbox "Has public email"
+  - text: Has public email
+  - combobox "Minimum audience":
+    - option "Any audience size" [selected]
+    - option "1K+ audience"
+    - option "10K+ audience"
+    - option "100K+ audience"
+  - combobox "Sort creators":
+    - option "Content relevance" [selected]
+    - option "Audience size"
+    - option "Email available"
+  - article:
+    - text: YouTube
+    - heading "Maya Chen" [level=2]
+    - paragraph: "@mayamakes"
+    - button "Remove Maya Chen" [pressed]
+    - paragraph: I turn complicated AI tools into practical workflows. Weekly tutorials for founders, marketers, and curious builders.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Maya Chen": “AI workflows for a one-person marketing team”
+    - strong: 84.2K
+    - text: subscribers
+    - strong: Public email available
+    - text: Illustrative source Illustrative sample
+    - button "View details for Maya Chen": View details
+  - article:
+    - text: Instagram
+    - heading "Alex Rivera" [level=2]
+    - paragraph: "@buildwithalex"
+    - button "Save Alex Rivera"
+    - paragraph: Building better systems for small businesses. AI tools, automation, and the occasional coffee experiment.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Alex Rivera": “Three automations I use every single day”
+    - strong: 42.6K
+    - text: followers
+    - strong: Public email available
+    - text: Illustrative source Illustrative sample
+    - button "View details for Alex Rivera": View details
+  - article:
+    - text: TikTok
+    - heading "Jordan Ellis" [level=2]
+    - paragraph: "@jordantechtalk"
+    - button "Save Jordan Ellis"
+    - paragraph: Your friendly neighborhood tech explainer. Making AI a little less intimidating, one video at a time.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Jordan Ellis": “AI tools that actually earn their place in your stack”
+    - strong: 128K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details for Jordan Ellis": View details
+  - article:
+    - text: LinkedIn
+    - heading "Priya Kapoor" [level=2]
+    - paragraph: "@priyagrowth"
+    - button "Save Priya Kapoor"
+    - paragraph: Growth advisor for early-stage SaaS. Writing about AI, lean marketing teams, and systems that scale.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Priya Kapoor": “What a lean marketing stack looks like in practice”
+    - strong: 31.6K
+    - text: followers
+    - strong: Public email available
+    - text: Illustrative source Illustrative sample
+    - button "View details for Priya Kapoor": View details
+  - article:
+    - text: X
+    - heading "Sam Foster" [level=2]
+    - paragraph: "@samships"
+    - button "Save Sam Foster"
+    - paragraph: Indie builder. Testing automation tools in public. Notes on growing a small internet business.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Sam Foster": “My favorite AI workflow this week”
+    - strong: 18.7K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details for Sam Foster": View details
+  - article:
+    - text: YouTube
+    - heading "Lena Brooks" [level=2]
+    - paragraph: "@lenalabs"
+    - button "Save Lena Brooks"
+    - paragraph: Thoughtful tech reviews for real working days. Honest walkthroughs of AI tools and productivity systems.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Lena Brooks": “An honest look at AI-powered research tools”
+    - strong: 56.7K
+    - text: subscribers
+    - strong: Public email available
+    - text: Illustrative source Illustrative sample
+    - button "View details for Lena Brooks": View details
+  - article:
+    - text: Instagram
+    - heading "Theo Park" [level=2]
+    - paragraph: "@theotools"
+    - button "Save Theo Park"
+    - paragraph: A little tech, a little design. Tools that help creative people get their time back.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Theo Park": “My five favorite AI shortcuts for content creation”
+    - strong: 23.8K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details for Theo Park": View details
+  - article:
+    - text: TikTok
+    - heading "Nora Williams" [level=2]
+    - paragraph: "@noraworks"
+    - button "Save Nora Williams"
+    - paragraph: Marketing without the chaos. Automation ideas for e-commerce founders and solo marketers.
+    - text: Illustrative topic match · AI tools / automation
+    - button "Review evidence for Nora Williams": “Turn one product shoot into a week of content”
+    - strong: 67.3K
+    - text: followers
+    - strong: Public email available
+    - text: Illustrative source Illustrative sample
+    - button "View details for Nora Williams": View details
+  - paragraph: Sample data is fictional. In live results, topic signals are keyword matches, not predictions of audience fit. Email availability does not confirm deliverability.
+  - text: Creator research. Evidence in view.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - button "Setup guide"
+- dialog "Connect your Bright Data.":
+  - heading "Connect your Bright Data." [level=2]
+  - button "Close connection dialog":
+    - img
+  - paragraph: Use your own account and API key. Live searches are billed to your Bright Data account. Sample mode needs no key.
+  - text: Bright Data API key
+  - textbox "Bright Data API key":
+    - /placeholder: Paste your API key
+  - paragraph: In the live app, your key stays in this tab’s memory and passes over HTTPS through the stateless relay to Bright Data. It is not saved. Refreshing clears it.
+  - button "Connect Bright Data":
+    - text: Connect Bright Data
+    - img
+  - link "Find your API key ↗":
+    - /url: https://brightdata.com/cp/setting/users
+  - group: New to Bright Data? Setup checklist
+  - group: After connecting & resuming work
+  - paragraph: "Visual concept only: this page does not connect accounts, transmit keys, or run collections. Signal Scout is built by Yaron Been; Bright Data supplies the search and collection APIs."
+- status: Exported 8 illustrative sample creators

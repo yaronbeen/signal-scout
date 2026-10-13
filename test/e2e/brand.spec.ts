@@ -37,10 +37,44 @@ test('setup guide gives agent and human steps; visitor key clears on refresh and
   await page.getByLabel('Bright Data API key').fill('fixture-visitor-key-only');
   await page.getByRole('dialog').getByRole('button',{name:'Connect Bright Data'}).click();
   await page.getByRole('button',{name:'Bright Data connected'}).click();
+  await page.getByLabel('Bright Data API key').fill('fixture-unsent-replacement-key');
   await page.getByRole('button',{name:'Disconnect and forget key'}).click();
   await expect(page.getByRole('button',{name:'Connect Bright Data',exact:true})).toBeVisible();
   await expect(page.getByLabel('Bright Data search zone · Instagram, LinkedIn & X')).toHaveCount(0);
   expect(connects).toBe(2);
+  await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await expect(page.getByLabel('Bright Data API key')).toHaveValue('');
+  expect(connects).toBe(2);
+});
+
+test('restricted account metadata explains unavailable website scanning without assuming a missing zone', async ({page}) => {
+  const calls: string[] = [];
+  await page.route('**/api/**', route => {
+    calls.push(new URL(route.request().url()).pathname);
+    expect(route.request().url()).toContain('/connect');
+    return route.fulfill({json:{connected:true,metadataAvailable:false,searchAvailable:false,searchZones:[],unlockerZone:''}});
+  });
+  await page.addInitScript(() => {
+    sessionStorage.setItem('signal-scout:v1:results', JSON.stringify([{
+      id:'youtube:https://www.youtube.com/@metadata-maker', platform:'youtube',
+      url:'https://www.youtube.com/@metadata-maker', name:'Metadata Maker', handle:'metadata-maker',
+      bio:'AI tools', avatar:'', followers:null, location:'', verified:false,
+      websites:['https://maker.example/'], contacts:[], evidence:[], matchedTerms:['AI tools'],
+      collectedAt:'2026-10-13T12:00:00.000Z', profileStatus:'partial',
+    }]));
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await page.getByLabel('Bright Data API key').fill('fixture-restricted-key-only');
+  await page.getByRole('dialog').getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await page.locator('.creator-card').getByRole('button',{name:'View details',exact:true}).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button',{name:'Scan public website for email'})).toBeDisabled();
+  await expect(dialog.locator('.scan-note')).toContainText('Account metadata is unavailable');
+  await expect(dialog.locator('.scan-note')).toContainText('Check your key’s account-metadata permissions and reconnect');
+  await expect(dialog.locator('.scan-note')).not.toContainText('Enable a Web Unlocker zone');
+  await expect(dialog.getByRole('status')).toHaveCount(0);
+  expect(calls).toEqual(['/api/connect']);
 });
 
 test('visitor can select an account search zone without submitting or replaying paid requests', async ({page}) => {
@@ -75,14 +109,14 @@ test('visitor can select an account search zone without submitting or replaying 
 test('brand attribution, animation and setup guidance remain usable across widths', async ({page}) => {
   await page.goto('/');
   await expect(page.locator('.hero').getByRole('link', {name:'Powered by Bright Data'})).toBeVisible();
-  expect(await page.locator('.hero').evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(510);
+  expect(await page.locator('.hero').evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(650);
   for (const width of [360, 700, 900, 1440]) {
     await page.setViewportSize({width, height:900});
     await expect(page.locator('.hero').getByRole('link', {name:'Powered by Bright Data'})).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   }
   await page.emulateMedia({reducedMotion:'reduce'});
-  expect(await page.locator('.radar-sweep').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+  expect(await page.locator('.hero-copy').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
   await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
   await page.getByText('New to Bright Data? Open the step-by-step setup checklist',{exact:true}).click();
   await expect(page.getByRole('dialog').getByRole('link',{name:/Set up search/})).toBeVisible();

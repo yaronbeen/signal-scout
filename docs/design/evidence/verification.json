@@ -1,0 +1,242 @@
+{
+  "date": "2026-10-13",
+  "viewports": [
+    {
+      "width": 320,
+      "state": "home",
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "width": 320,
+      "state": "results",
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "width": 320,
+      "state": "details",
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "width": 320,
+      "state": "connection",
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "width": 320,
+      "state": "setup",
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "width": 390,
+      "state": "home",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "state": "results",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "state": "details",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "state": "connection",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "state": "setup",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 768,
+      "state": "home",
+      "viewport": 768,
+      "document": 768
+    },
+    {
+      "width": 768,
+      "state": "results",
+      "viewport": 768,
+      "document": 768
+    },
+    {
+      "width": 768,
+      "state": "details",
+      "viewport": 768,
+      "document": 768
+    },
+    {
+      "width": 768,
+      "state": "connection",
+      "viewport": 768,
+      "document": 768
+    },
+    {
+      "width": 768,
+      "state": "setup",
+      "viewport": 768,
+      "document": 768
+    },
+    {
+      "width": 1024,
+      "state": "home",
+      "viewport": 1024,
+      "document": 1024
+    },
+    {
+      "width": 1024,
+      "state": "results",
+      "viewport": 1024,
+      "document": 1024
+    },
+    {
+      "width": 1024,
+      "state": "details",
+      "viewport": 1024,
+      "document": 1024
+    },
+    {
+      "width": 1024,
+      "state": "connection",
+      "viewport": 1024,
+      "document": 1024
+    },
+    {
+      "width": 1024,
+      "state": "setup",
+      "viewport": 1024,
+      "document": 1024
+    },
+    {
+      "width": 1440,
+      "state": "home",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "state": "results",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "state": "details",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "state": "connection",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "state": "setup",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1920,
+      "state": "home",
+      "viewport": 1920,
+      "document": 1920
+    },
+    {
+      "width": 1920,
+      "state": "results",
+      "viewport": 1920,
+      "document": 1920
+    },
+    {
+      "width": 1920,
+      "state": "details",
+      "viewport": 1920,
+      "document": 1920
+    },
+    {
+      "width": 1920,
+      "state": "connection",
+      "viewport": 1920,
+      "document": 1920
+    },
+    {
+      "width": 1920,
+      "state": "setup",
+      "viewport": 1920,
+      "document": 1920
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "textContrast": [
+    {
+      "role": "primary text",
+      "foreground": "#102442",
+      "background": "#FFFFFF",
+      "ratio": 15.52
+    },
+    {
+      "role": "secondary on white",
+      "foreground": "#52627A",
+      "background": "#FFFFFF",
+      "ratio": 6.2
+    },
+    {
+      "role": "secondary on canvas",
+      "foreground": "#52627A",
+      "background": "#F5F7FB",
+      "ratio": 5.78
+    },
+    {
+      "role": "CTA white text",
+      "foreground": "#FFFFFF",
+      "background": "#285FD2",
+      "ratio": 5.74
+    },
+    {
+      "role": "sample notice",
+      "foreground": "#493F66",
+      "background": "#E9E7F6",
+      "ratio": 7.88
+    },
+    {
+      "role": "public contact",
+      "foreground": "#24604C",
+      "background": "#FFFFFF",
+      "ratio": 7.36
+    }
+  ],
+  "normalMotionEntranceCompleted": true,
+  "flows": [
+    "empty topic validation",
+    "topic preset",
+    "unconnected search opens dialog",
+    "sample results",
+    "details and Escape focus restoration",
+    "save and shortlist",
+    "email filter",
+    "named mobile/desktop platform filter",
+    "no matches and recovery",
+    "sample CSV export",
+    "connection dialog",
+    "setup checklist"
+  ],
+  "realKeysEntered": false,
+  "paidRequests": 0
+}

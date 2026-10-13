@@ -1,0 +1,82 @@
+- banner:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - navigation "Main navigation":
+    - button "Discover"
+    - button "Your shortlist 0"
+    - button "Recent searches"
+  - button "Connect Bright Data"
+- main:
+  - text: Creator discovery, with context
+  - heading "Find your people. Follow the signal." [level=1]
+  - paragraph: Discover creators across five platforms. See the evidence behind each match, find public contacts, and build your shortlist.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - heading "Who are you looking for?" [level=2]
+  - button "Explore a sample":
+    - text: Explore a sample
+    - img
+  - text: Topics or keywords
+  - img
+  - textbox "Topic or keyword":
+    - /placeholder: AI tools, automation
+  - paragraph: Up to 3 focused topics, separated by commas.
+  - button "AI & automation"
+  - button "Skincare"
+  - button "SaaS & startups"
+  - group "Search across":
+    - text: Search across
+    - button "YouTube" [pressed]:
+      - text: YouTube
+      - img
+    - button "Instagram" [pressed]:
+      - text: Instagram
+      - img
+    - button "TikTok" [pressed]:
+      - text: TikTok
+      - img
+    - button "LinkedIn" [pressed]:
+      - text: LinkedIn
+      - img
+    - button "X" [pressed]:
+      - text: X
+      - img
+  - text: Search depth
+  - combobox "Search depth":
+    - option "Focused · up to 5 / platform" [selected]
+    - option "Balanced · up to 10 / platform"
+    - option "Broader · up to 20 / platform"
+  - img
+  - paragraph:
+    - strong: Your account pays for live collection.
+    - text: Public data only. Search, post collection and profile collection are separate paid stages. Depth limits records, not a currency budget.
+  - button "Discover creators":
+    - img
+    - text: Discover creators
+    - img
+  - group: Collection limits & pricing
+  - paragraph: Your own key required. Sample mode needs no key.
+  - region "How discovery works":
+    - text: "01"
+    - heading "Start with a topic." [level=3]
+    - paragraph: Choose your niche, platforms, and a focused collection depth.
+    - text: "02"
+    - heading "See why they surfaced." [level=3]
+    - paragraph: Review public profiles, content evidence, and source-linked contacts.
+    - text: "03"
+    - heading "Keep the good fits." [level=3]
+    - paragraph: Save creators in this browser. Export your shortlist as a CSV.
+  - text: Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - button "Setup guide":
+    - text: Setup guide
+    - img

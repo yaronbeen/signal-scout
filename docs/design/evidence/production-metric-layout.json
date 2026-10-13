@@ -1,0 +1,94 @@
+[
+  {
+    "width": 320,
+    "contained": true,
+    "noOverlap": true,
+    "cells": [
+      {
+        "rect": {
+          "x": 40,
+          "y": 552.546875,
+          "width": 240,
+          "height": 53.890625,
+          "top": 552.546875,
+          "right": 280,
+          "bottom": 606.4375,
+          "left": 40
+        },
+        "text": "Not availablesubscribers"
+      },
+      {
+        "rect": {
+          "x": 40,
+          "y": 618.4375,
+          "width": 240,
+          "height": 53.890625,
+          "top": 618.4375,
+          "right": 280,
+          "bottom": 672.328125,
+          "left": 40
+        },
+        "text": "Unknownpublic emails found"
+      },
+      {
+        "rect": {
+          "x": 40,
+          "y": 684.328125,
+          "width": 240,
+          "height": 53.890625,
+          "top": 684.328125,
+          "right": 280,
+          "bottom": 738.21875,
+          "left": 40
+        },
+        "text": "1matching search terms"
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "contained": true,
+    "noOverlap": true,
+    "cells": [
+      {
+        "rect": {
+          "x": 40,
+          "y": 484.15625,
+          "width": 149,
+          "height": 53.890625,
+          "top": 484.15625,
+          "right": 189,
+          "bottom": 538.046875,
+          "left": 40
+        },
+        "text": "Not availablesubscribers"
+      },
+      {
+        "rect": {
+          "x": 201,
+          "y": 484.15625,
+          "width": 149,
+          "height": 53.890625,
+          "top": 484.15625,
+          "right": 350,
+          "bottom": 538.046875,
+          "left": 201
+        },
+        "text": "Unknownpublic emails found"
+      },
+      {
+        "rect": {
+          "x": 40,
+          "y": 550.046875,
+          "width": 149,
+          "height": 53.890625,
+          "top": 550.046875,
+          "right": 189,
+          "bottom": 603.9375,
+          "left": 40
+        },
+        "text": "1matching search terms"
+      }
+    ]
+  }
+]

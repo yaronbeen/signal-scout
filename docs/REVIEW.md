@@ -1,5 +1,7 @@
 # Four-perspective review and design refresh — 2026-10-13
 
+> Historical review of an earlier release. The later Clear Signal production redesign and triple-review iterations are tracked in [design/ITERATIONS.md](design/ITERATIONS.md); current release checks are in [VERIFICATION.md](VERIFICATION.md).
+
 Four independent read-only reviewers assessed the released app: Bright Data brand marketing, a nontechnical marketer, a copywriting expert, and an engineer. The user subsequently requested Bright Data colors and a more impressive animated design.
 
 ## Findings addressed
@@ -49,4 +51,4 @@ Verified browser widths: 360, 700, 900, and 1440 pixels. Explicit provider attri
 
 ## Remaining product limitations
 
-Company mode requires manually chosen niche/audience terms; it does not research a company or generate an AI audience strategy. Keyword badges represent loose text signals, not exact phrase or audience-quality scores. Bright Data account prices vary, so pricing is linked rather than an invented fixed search estimate. Browser-based storage is device/tab dependent. Local installation assumes a coding agent or Git/Node familiarity. These are product boundaries rather than guarantees of campaign outcomes.
+At this historical release, company mode required manually chosen niche/audience terms and keyword badges represented loose text signals. Later releases removed company mode and tightened whole-word topic matching with collected post evidence; neither implies audience quality. Bright Data account prices vary, so pricing is linked rather than an invented fixed search estimate. Browser-based storage is device/tab dependent. Local installation assumes a coding agent or Git/Node familiarity. These are product boundaries rather than guarantees of campaign outcomes.

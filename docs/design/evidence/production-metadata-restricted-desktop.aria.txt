@@ -1,0 +1,152 @@
+- banner:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - navigation "Main navigation":
+    - button "Discover"
+    - button "Your shortlist 1"
+    - button "Recent searches"
+  - button "Bright Data connected":
+    - img
+    - text: Bright Data connected
+- main:
+  - img
+  - strong: AI tools
+  - text: Instagram · Up to 5 profiles / platform
+  - button "Edit search"
+  - button "New search"
+  - button "Explore a sample" [disabled]:
+    - img
+    - text: Explore a sample
+  - img
+  - strong: You have 1 unfinished platform collection(s).
+  - text: Continue saved work. Resume can start separately billed post or profile collection; existing snapshot jobs are checked without resubmitting them. Pausing or discarding references does not cancel Bright Data jobs; submitted jobs may still be billed. Refresh clears your key; reconnect to resume. Results and job references are stored in this tab only and may be lost when you close the tab. Export results and retain snapshot IDs first.
+  - list "Saved collection references":
+    - listitem:
+      - strong: Instagram
+      - text: Profile collection
+      - code: sd_visualsnapshot123
+      - button "Copy Instagram snapshot ID":
+        - img
+  - button "Resume search"
+  - button "Discard references"
+  - heading "Meet your next collaborators." [level=2]
+  - paragraph:
+    - strong: 3 creators discovered
+    - text: · 0 with public email · 1 platforms
+  - button "Export CSV 3":
+    - img
+    - text: Export CSV 3
+  - paragraph: Topic matches are evidence signals, not audience-fit or campaign-performance scores.
+  - group "Filter by platform":
+    - button "All creators 3" [pressed]
+    - button "YouTube 0"
+    - button "Instagram 3"
+    - button "TikTok 0"
+    - button "LinkedIn 0"
+    - button "X 0"
+  - img
+  - textbox "Filter creators":
+    - /placeholder: Search name or bio
+  - checkbox "Has email"
+  - text: Has email
+  - combobox "Minimum audience":
+    - option "Any audience size" [selected]
+    - option "1K+ followers / subscribers"
+    - option "10K+ followers / subscribers"
+    - option "100K+ followers / subscribers"
+  - combobox "Sort creators":
+    - option "Content relevance" [selected]
+    - option "Audience size"
+    - option "Email available"
+  - article:
+    - text: CR Instagram
+    - heading "Complete Researcher" [level=3]
+    - text: "@status_complete"
+    - button "Save Complete Researcher":
+      - img
+    - paragraph: I explain AI tools for marketers.
+    - button "Profile topic match · AI tools AI tools for weekly research":
+      - text: Profile topic match · AI tools AI tools for weekly research
+      - img
+    - strong: 12K
+    - text: followers
+    - strong: No email found
+    - text: Website available Collected with Bright Data
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: PR Instagram
+    - heading "Pending Researcher" [level=3]
+    - text: "@status_pending"
+    - button "Save Pending Researcher":
+      - img
+    - paragraph: I explain AI tools for marketers.
+    - button "Search evidence only · AI tools AI tools for weekly research":
+      - text: Search evidence only · AI tools AI tools for weekly research
+      - img
+    - strong: Not available
+    - text: followers
+    - strong: Email collection pending
+    - text: Website available Profile collection pending
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: PR Instagram
+    - heading "Partial Researcher" [level=3]
+    - text: "@status_partial"
+    - button "Save Partial Researcher":
+      - img
+    - paragraph: I explain AI tools for marketers.
+    - button "Search evidence only · AI tools AI tools for weekly research":
+      - text: Search evidence only · AI tools AI tools for weekly research
+      - img
+    - strong: Not available
+    - text: followers
+    - strong: Email unavailable · partial profile
+    - text: Website available Partial profile
+    - button "View details":
+      - text: View details
+      - img
+  - img
+  - text: Publicly collected data. Email availability does not confirm deliverability. Topic signals are keyword matches, not audience guarantees. Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - button "Setup guide":
+    - text: Setup guide
+    - img
+- dialog "Your Bright Data connection":
+  - heading "Your Bright Data connection" [level=2]
+  - button "Close dialog":
+    - img
+  - img
+  - strong: Key connected
+  - paragraph: Account metadata is unavailable. Check your key’s account-metadata permissions and reconnect to load zones. Service permissions, credits, and zone health are not confirmed.
+  - paragraph: Each visitor uses their own Bright Data key and pays for their own searches. Signal Scout does not provide a shared key or free live collection. Sample mode needs no key.
+  - text: Bright Data API key
+  - textbox "Bright Data API key":
+    - /placeholder: Paste a key to replace your connection
+  - paragraph:
+    - img
+    - text: Kept only in this tab’s memory. On the public website, sent over HTTPS through the stateless relay to Bright Data; not saved to browser storage or the server. Refreshing or closing the tab clears your key.
+  - button "Connect Bright Data":
+    - text: Connect Bright Data
+    - img
+  - link "Find your API key in Bright Data":
+    - /url: https://brightdata.com/cp/setting/users
+    - text: Find your API key in Bright Data
+    - img
+  - group: New to Bright Data? Open the step-by-step setup checklist
+  - group:
+    - text: After connecting & resuming work
+    - paragraph: Choose your search zone in the form, enter 1–3 short topics, choose platforms and depth, then click Discover creators. Search and profile collection are separate paid stages; depth limits records, not a currency budget.
+    - text: Connecting checks account metadata without a paid search. It does not verify every product permission, your balance, or that the selected zone works. Collections can take several minutes; resume pending jobs rather than starting them again.
+    - paragraph: After a refresh, reconnect your key and resume saved jobs. Resume can start separately billed post collection or a separately paid profile-enrichment stage; existing snapshot jobs are checked without resubmitting them. Results and job references are stored in this tab only and may be lost when you close the tab. Export results and retain snapshot IDs first. Submitted provider jobs may keep running and be billed after pausing.
+  - paragraph: Signal Scout is an open-source app built by Yaron Been. Bright Data provides the search and collection APIs. Your key passes through this app’s relay to Bright Data and is not saved.
+  - button "Disconnect and forget key"

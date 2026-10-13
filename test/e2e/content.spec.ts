@@ -29,6 +29,7 @@ test('post-only authors are discovered, enriched and ranked before search-only p
     if(url.pathname.endsWith('/result'))return route.fulfill({json:{records:url.searchParams.get('id')==='sd_posts12345'?postRecords:[{url:author,full_name:'Actual Media Buyer',biography:'Marketing practitioner',followers:12000},{url:'https://www.instagram.com/profile_only/',full_name:'Search Candidate',biography:'Consultant',followers:90000}]}});
   });
   await setup(page);
+  await page.getByText('Collection limits & pricing', {exact:true}).click();
   await expect(page.getByText(/2 search pages per topic/)).toBeVisible();
   await page.getByRole('main').getByRole('button',{name:'Discover creators',exact:true}).click();
   await expect(page.locator('.progress-item.done')).toHaveCount(1);

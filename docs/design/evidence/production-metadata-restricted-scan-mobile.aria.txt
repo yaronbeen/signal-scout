@@ -1,0 +1,168 @@
+- banner:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - navigation "Main navigation":
+    - button "Discover"
+    - button "Your shortlist 1"
+    - button "Recent searches"
+  - button "Bright Data connected"
+- main:
+  - img
+  - strong: AI tools
+  - text: Instagram · Up to 5 profiles / platform
+  - button "Edit search"
+  - button "New search"
+  - button "Explore a sample" [disabled]:
+    - img
+    - text: Explore a sample
+  - strong: You have 1 unfinished platform collection(s).
+  - text: Continue saved work. Resume can start separately billed post or profile collection; existing snapshot jobs are checked without resubmitting them. Pausing or discarding references does not cancel Bright Data jobs; submitted jobs may still be billed. Refresh clears your key; reconnect to resume. Results and job references are stored in this tab only and may be lost when you close the tab. Export results and retain snapshot IDs first.
+  - list "Saved collection references":
+    - listitem:
+      - strong: Instagram
+      - text: Profile collection
+      - code: sd_visualsnapshot123
+      - button "Copy Instagram snapshot ID":
+        - img
+  - button "Resume search"
+  - button "Discard references"
+  - heading "Meet your next collaborators." [level=2]
+  - paragraph:
+    - strong: 3 creators discovered
+    - text: · 0 with public email · 1 platforms
+  - button "Export CSV 3":
+    - img
+    - text: Export CSV 3
+  - paragraph: Topic matches are evidence signals, not audience-fit or campaign-performance scores.
+  - text: Platform
+  - combobox "Filter by platform":
+    - option "All creators (3)" [selected]
+    - option "YouTube (0)"
+    - option "Instagram (3)"
+    - option "TikTok (0)"
+    - option "LinkedIn (0)"
+    - option "X (0)"
+  - img
+  - textbox "Filter creators":
+    - /placeholder: Search name or bio
+  - checkbox "Has email"
+  - text: Has email
+  - combobox "Minimum audience":
+    - option "Any audience size" [selected]
+    - option "1K+ followers / subscribers"
+    - option "10K+ followers / subscribers"
+    - option "100K+ followers / subscribers"
+  - combobox "Sort creators":
+    - option "Content relevance" [selected]
+    - option "Audience size"
+    - option "Email available"
+  - article:
+    - text: CR Instagram
+    - heading "Complete Researcher" [level=3]
+    - text: "@status_complete"
+    - button "Save Complete Researcher":
+      - img
+    - paragraph: I explain AI tools for marketers.
+    - button "Profile topic match · AI tools AI tools for weekly research":
+      - text: Profile topic match · AI tools AI tools for weekly research
+      - img
+    - strong: 12K
+    - text: followers
+    - strong: No email found
+    - text: Website available Collected with Bright Data
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: PR Instagram
+    - heading "Pending Researcher" [level=3]
+    - text: "@status_pending"
+    - button "Save Pending Researcher":
+      - img
+    - paragraph: I explain AI tools for marketers.
+    - button "Search evidence only · AI tools AI tools for weekly research":
+      - text: Search evidence only · AI tools AI tools for weekly research
+      - img
+    - strong: Not available
+    - text: followers
+    - strong: Email collection pending
+    - text: Website available Profile collection pending
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: PR Instagram
+    - heading "Partial Researcher" [level=3]
+    - text: "@status_partial"
+    - button "Save Partial Researcher":
+      - img
+    - paragraph: I explain AI tools for marketers.
+    - button "Search evidence only · AI tools AI tools for weekly research":
+      - text: Search evidence only · AI tools AI tools for weekly research
+      - img
+    - strong: Not available
+    - text: followers
+    - strong: Email unavailable · partial profile
+    - text: Website available Partial profile
+    - button "View details":
+      - text: View details
+      - img
+  - img
+  - text: Publicly collected data. Email availability does not confirm deliverability. Topic signals are keyword matches, not audience guarantees. Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - button "Setup guide":
+    - text: Setup guide
+    - img
+- dialog "Creator intelligence":
+  - heading "Creator intelligence" [level=2]
+  - button "Close dialog":
+    - img
+  - text: PR Instagram
+  - heading "Partial Researcher" [level=2]
+  - text: "@status_partial"
+  - button "Save creator":
+    - img
+    - text: Save creator
+  - paragraph: Partial profile · enrichment did not complete
+  - paragraph: I explain AI tools for marketers.
+  - paragraph: Profile collection returned no usable profile.
+  - strong: Not available
+  - text: followers
+  - strong: Unknown
+  - text: public emails found
+  - strong: "1"
+  - text: matching search terms
+  - img
+  - heading "Why they surfaced" [level=3]
+  - text: COLLECTED EVIDENCE
+  - img
+  - text: AI tools Search result
+  - paragraph: AI tools for weekly research
+  - link "Open evidence":
+    - /url: https://www.instagram.com/status_partial/
+    - text: Open evidence
+    - img
+  - text: Topic signals are literal matches in collected text, not a prediction of audience fit or campaign performance.
+  - img
+  - heading "Contact signals" [level=3]
+  - text: PUBLIC SOURCES
+  - paragraph: Email collection is incomplete because profile enrichment failed. Review the partial evidence and collection recovery.
+  - img
+  - text: https://researcher.example/
+  - link "Open creator website":
+    - /url: https://researcher.example/
+    - img
+  - button "Scan public website for email" [disabled]:
+    - img
+    - text: Scan public website for email
+  - text: One additional Bright Data Web Unlocker request; usage billed to your account. Account metadata is unavailable, so your Web Unlocker zones could not be loaded. Check your key’s account-metadata permissions and reconnect. Collected 10/13/2026
+  - link "Open Instagram profile":
+    - /url: https://www.instagram.com/status_partial/
+    - text: Open Instagram profile
+    - img

@@ -34,7 +34,7 @@ export function useSearch() {
     const saved = store(name, value, true);
     if (!saved)
       setStorageWarning(
-        "Browser storage is unavailable. Export results and keep this tab open to preserve job references.",
+        current => current || "Browser storage is unavailable. Export results and keep this tab open to preserve job references.",
       );
     return saved;
   }
@@ -45,6 +45,12 @@ export function useSearch() {
   }
   function append(next: Creator[]) {
     results(mergeCreators(resultRef.current, next));
+  }
+  function publishCandidates(p: Platform, next: Creator[]) {
+    const selected = new Set(next.map(c => c.id));
+    // A post author can displace an early SERP candidate. Remove displaced rows
+    // while preserving contacts/evidence on selected rows and other platforms.
+    results(mergeCreators(resultRef.current.filter(c => c.platform !== p || selected.has(c.id)), next));
   }
   function saveJobs(next: Job[]) {
     jobRef.current = next;
@@ -97,7 +103,12 @@ export function useSearch() {
         snapshot: response.snapshot,
         createdAt: Date.now(),
       };
-      updateJob(next);
+      patch(job.platform, { snapshot: next.snapshot });
+      if (!updateJob(next)) {
+        const message = `Collection accepted as ${next.snapshot}, but browser storage could not save its reference. Keep this tab open and copy this snapshot ID before refreshing. Resume checks this collection without resubmitting it.`;
+        setStorageWarning(message);
+        throw new Error(message);
+      }
       return next;
     } catch (e) {
       // Only explicit 4xx rejections establish that no collection was accepted.
@@ -118,7 +129,7 @@ export function useSearch() {
     existing?: Job,
     searchZone = "",
   ) {
-    let candidates = existing?.candidates || [];
+    let candidates = (existing?.candidates || []).slice().sort(compareRelevance).slice(0, config.depth);
     const startedAt = Date.now();
     let termWarning = existing?.warning || "";
     let job: Job = existing || {
@@ -128,7 +139,9 @@ export function useSearch() {
       createdAt: Date.now(),
       config,
     };
+    if (job.candidates) job = { ...job, candidates };
     try {
+      if (candidates.length) publishCandidates(p, candidates);
       paused(signal);
       if (job.stage === "uncertain") {
         patch(p, {
@@ -189,6 +202,9 @@ export function useSearch() {
                   : "Bright Data is discovering creators…",
             }),
           );
+          const failures = records.filter(r => r.error).length;
+          if (failures)
+            termWarning += ` · ${failures} discovery record(s) failed; successful evidence preserved`;
         }
         candidates = discoverCandidates(
           p,
@@ -197,18 +213,18 @@ export function useSearch() {
           config.depth,
         );
         const postUrls = ['instagram', 'linkedin', 'x'].includes(p) ? searchPostUrls(p, records, config.depth) : [];
+        if (candidates.length) publishCandidates(p, candidates);
         if (postUrls.length) {
           job = {...job, stage: 'posts-ready', snapshot: '', candidates, postUrls, warning: termWarning};
           updateJob(job);
         } else {
           if (!candidates.length && records.some((r) => r.error))
-            throw new Error("The scraper returned collection errors. Try another keyword or check scraper access.");
+            throw new CollectionFailedError("The scraper returned collection errors. Try another keyword or check scraper access.");
           if (!candidates.length) {
             patch(p, {phase: "done", message: `No profiles matched. Try a broader topic.${termWarning}`, count: 0});
             saveJobs(jobRef.current.filter(j => j.platform !== p));
             return;
           }
-          append(candidates);
           job = { ...job, stage: "ready", snapshot: "", candidates, warning:termWarning };
           updateJob(job);
         }
@@ -235,11 +251,13 @@ export function useSearch() {
         candidates = mergeCreators(candidates, authored).sort(compareRelevance).slice(0, config.depth);
         if (records.some(r => r.error)) termWarning += ' · Some posts could not be collected; profile candidates preserved';
         if (!candidates.length) {
+          if (records.some(r => r.error))
+            throw new CollectionFailedError('Post collection returned errors and no usable authors. No matching-author conclusion is available. Check scraper access or try another topic.');
           patch(p, {phase:'done', message:'No matching authors or profile candidates found.', count:0});
           saveJobs(jobRef.current.filter(j => j.platform !== p));
           return;
         }
-        append(candidates);
+        publishCandidates(p, candidates);
         job = {...job, stage:'ready', snapshot:'', candidates, warning:termWarning};
         updateJob(job);
       }
@@ -260,12 +278,22 @@ export function useSearch() {
         message: "Collecting profiles and public emails…",
         count: candidates.length,
       });
-      append(candidates);
-      const records = await collect(job.snapshot, key, signal, () =>
-        patch(p, { message: "Bright Data is enriching profiles…" }),
+      publishCandidates(p, candidates);
+      let records: RawRecord[];
+      let enrichmentFailure = '';
+      try {
+        records = await collect(job.snapshot, key, signal, () =>
+          patch(p, { message: "Bright Data is enriching profiles…" }),
+        );
+      } catch (e) {
+        if (!(e instanceof CollectionFailedError)) throw e;
+        records = [];
+        enrichmentFailure = 'Profile collection failed or was canceled. Discovery evidence is available.';
+      }
+      const enriched = enrichCreators(p, records, candidates, config.keywords).map(c =>
+        enrichmentFailure ? { ...c, profileStatus: 'partial' as const, enrichmentError: enrichmentFailure } : c,
       );
-      const enriched = enrichCreators(p, records, candidates, config.keywords);
-      append(enriched);
+      publishCandidates(p, enriched);
       const emails = enriched.filter((c) => c.contacts.length).length;
       const partial = enriched.filter((c) => c.enrichmentError).length;
       patch(p, {
@@ -275,7 +303,9 @@ export function useSearch() {
       });
       saveJobs(jobRef.current.filter((j) => j.platform !== p));
     } catch (e) {
-      if (candidates.length) append(candidates);
+      if (e instanceof CollectionFailedError)
+        saveJobs(jobRef.current.filter(j => j.platform !== p));
+      if (candidates.length) publishCandidates(p, candidates);
       if (signal.aborted)
         patch(p, {
           phase: "idle",

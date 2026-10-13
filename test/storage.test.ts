@@ -23,3 +23,19 @@ test('blocked storage returns failure instead of throwing', () => {
   assert.equal(store('shortlist', sampleCreators), false);
   Object.defineProperty(globalThis, 'localStorage', { value: old, configurable: true });
 });
+test('durable creator state survives discarded job references and legacy records remain unknown', () => {
+  values.clear();
+  const states = ['pending', 'complete', 'partial'] as const;
+  const creators = states.map(profileStatus => ({ ...sampleCreators[0], sample: false, profileStatus }));
+  const legacy = { ...sampleCreators[1], sample: false };
+  const invalid = { ...legacy, profileStatus: 'collected' };
+  store('results', [...creators, legacy, invalid], true);
+  store('shortlist', [...creators, legacy, invalid]);
+  store('jobs', [], true);
+  assert.equal(pendingJobs().length, 0);
+  for (const restored of [currentResults(), savedCreators()]) {
+    assert.equal(restored.length, 4);
+    assert.deepEqual(restored.slice(0, 3).map(c => c.profileStatus), states);
+    assert.equal(restored[3].profileStatus, undefined);
+  }
+});

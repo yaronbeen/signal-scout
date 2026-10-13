@@ -44,4 +44,5 @@ Fixture tests validate attribution, whole-word topic matching, permalink correla
 ## Related
 
 - [Account-specific SERP zone timeouts](active-serp-zone-timeouts-20261013.md)
+- [LinkedIn empty repost metadata](linkedin-empty-repost-metadata-20261013.md)
 - [Architecture](../../ARCHITECTURE.md)

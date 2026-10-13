@@ -345,6 +345,7 @@ export async function handleRequest(
     if (url.pathname === "/api/connect") {
       // Non-billable account metadata check. A restricted key can still use scrapers.
       let zones: { name: string; type: string; status: string }[] = [];
+      let metadataAvailable = true;
       try {
         zones = (await upstream(
           "/zone/get_all_zones",
@@ -353,9 +354,11 @@ export async function handleRequest(
         )) as typeof zones;
       } catch (e) {
         if (!(e instanceof ApiError) || e.status !== 403) throw e;
+        metadataAvailable = false;
       }
       return json({
         connected: true,
+        metadataAvailable,
         searchAvailable:
           Array.isArray(zones) &&
           zones.some((z) => z.type === "serp" && z.status === "active"),

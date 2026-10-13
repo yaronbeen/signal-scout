@@ -1,0 +1,138 @@
+- complementary:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - text: "Y"
+  - strong: Your workspace
+  - text: Saved in this browser BROWSER WORKSPACE
+  - navigation "Main navigation":
+    - button "Discover creators":
+      - img
+      - text: Discover creators
+      - img
+    - button "Your shortlist 0":
+      - img
+      - text: Your shortlist 0
+    - button "Recent searches":
+      - img
+      - text: Recent searches
+  - img
+  - strong: Your next great partnership starts with a signal.
+  - paragraph: Real profiles. Public contacts. Your own data, on your terms.
+  - button "Take a quick tour":
+    - text: Take a quick tour
+    - img
+  - button "How it works":
+    - img
+    - text: How it works
+  - link "Run it locally":
+    - /url: https://github.com/yaronbeen/signal-scout
+    - img
+    - text: Run it locally
+    - img
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+- banner:
+  - text: Workspace /
+  - strong: Discover creators
+  - img
+  - text: Bring your own key
+  - button "Connect Bright Data":
+    - img
+    - text: Connect Bright Data
+- main:
+  - text: FIVE-PLATFORM CREATOR RESEARCH
+  - heading "Find your people. Make some noise." [level=1]
+  - paragraph: Discover creators across five platforms with Bright Data. Review profile evidence, find public emails, and export your shortlist.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - paragraph:
+    - text: Live searches require your own Bright Data account, API key and credits.
+    - button "Setup guide"
+  - text: 5 platforms. One search.
+  - img
+  - text: Your key. Your data. 01
+  - heading "Who are you looking for?" [level=2]
+  - button "Explore a sample":
+    - img
+    - text: Explore a sample
+    - img
+  - text: Topic or keyword · up to 3, separated by commas
+  - img
+  - textbox "Topic or keyword":
+    - /placeholder: Try “AI tools”, “sustainable skincare”, or “B2B marketing”
+  - text: "TOPIC A little inspiration:"
+  - button "AI & automation":
+    - text: AI & automation
+    - img
+  - button "Skincare creators":
+    - text: Skincare creators
+    - img
+  - button "SaaS & startups":
+    - text: SaaS & startups
+    - img
+  - text: Search across
+  - button "YouTube" [pressed]:
+    - text: YouTube
+    - img
+  - button "Instagram" [pressed]:
+    - text: Instagram
+    - img
+  - button "TikTok" [pressed]:
+    - text: TikTok
+    - img
+  - button "LinkedIn" [pressed]:
+    - text: LinkedIn
+    - img
+  - button "X" [pressed]:
+    - text: X
+    - img
+  - text: Search depth
+  - combobox "Search depth":
+    - option "Focused · up to 5 / platform" [selected]
+    - option "Balanced · up to 10 / platform"
+    - option "Broader · up to 20 / platform"
+  - img
+  - img
+  - text: Public data only. Usage billed to your Bright Data account.
+  - button "Discover creators":
+    - img
+    - text: Discover creators
+    - img
+  - paragraph:
+    - text: "Up to 5 profiles per platform. YouTube/TikTok: up to 5 posts per topic. Instagram/LinkedIn/X: 2 search pages per topic (profiles + content), then up to 5 discovered posts per platform to identify authors. Search, post collection and profile collection are separate paid stages."
+    - link "View pricing":
+      - /url: https://brightdata.com/pricing
+      - text: View pricing
+      - img
+  - heading "A better way to find your fit." [level=2]
+  - paragraph: From a topic to a shortlist. All the context you need, none of the busywork.
+  - img
+  - text: "01"
+  - heading "Start with a signal" [level=3]
+  - paragraph: A niche, a topic, or a keyword. Tell us what a good fit looks like.
+  - img
+  - text: "02"
+  - heading "Go beyond the handle" [level=3]
+  - paragraph: Real profiles, audience counts, and public contacts. Collected live.
+  - img
+  - text: "03"
+  - heading "Make your shortlist" [level=3]
+  - paragraph: Save the standouts. Export the data. Your next partnership starts here.
+  - text: Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - text: /
+  - button "How it works":
+    - text: How it works
+    - img

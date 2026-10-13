@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -7,18 +7,14 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  Compass,
   Copy,
   ExternalLink,
   Eye,
   Globe2,
-  HelpCircle,
   History,
   KeyRound,
-  Layers3,
   LoaderCircle,
   Mail,
-  Menu,
   Pause,
   Radio,
   Search,
@@ -26,11 +22,10 @@ import {
   SlidersHorizontal,
   Sparkles,
   Terminal,
-  Users,
   X as Close,
 } from "lucide-react";
 import { api } from "./api";
-import { compareRelevance, formatCount, relevanceLabel, safeUrl, toCsv } from "./data";
+import { compareRelevance, contentSignals, formatCount, matchesTopic, relevanceLabel, safeUrl, toCsv } from "./data";
 import {
   isConfig,
   load,
@@ -49,6 +44,7 @@ import {
 } from "./types";
 import { useSearch } from "./useSearch";
 import { localSetupPrompt } from "./setup";
+import { SampleArt, samplePortrait } from "./SampleArt";
 
 type View = "discover" | "shortlist" | "history";
 function ProviderCredit() {
@@ -59,7 +55,7 @@ function ProviderSetup() {
     <h3>Your Bright Data checklist</h3>
     <ol>
       <li><strong>Create your account and check credits.</strong> Live searches are billed to your Bright Data account. <a href="https://brightdata.com" target="_blank" rel="noreferrer">Create an account</a> · <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">Check pricing</a></li>
-      <li><strong>Enable Web Scraper API access for your key.</strong> Required to collect creator profiles on all five platforms and discover YouTube/TikTok content. <a href="https://docs.brightdata.com/scraping-automation/web-scraper-api/overview" target="_blank" rel="noreferrer">Web Scraper API guide</a></li>
+      <li><strong>Enable Web Scraper API access for your key.</strong> Required to collect creator profiles on all five platforms and discover YouTube/TikTok content. <a href="https://docs.brightdata.com/products/scrapers/overview" target="_blank" rel="noreferrer">Web Scraper API guide</a></li>
       <li><strong>Set up a SERP API search zone for Instagram, LinkedIn & X.</strong> A zone is a named search service in your Bright Data account. After connecting, choose it in the search form. “Active” does not guarantee it can complete a search. <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">Set up search for Instagram, LinkedIn & X</a></li>
       <li><strong>Optional: enable Web Unlocker.</strong> Only needed for the “Scan website” email check, which is separately billed. Profile email discovery works without it. <a href="https://docs.brightdata.com/scraping-automation/web-unlocker/quickstart" target="_blank" rel="noreferrer">Website scan setup</a></li>
       <li><strong>Copy your API key and enter it here.</strong> Use your own key, only in the app’s key field. <a href="https://brightdata.com/cp/setting/users" target="_blank" rel="noreferrer">Find your API key</a></li>
@@ -106,7 +102,7 @@ function Avatar({
   const color = [...creator.name].reduce((n, c) => n + c.charCodeAt(0), 0) % 6;
   return (
     <div className={`avatar avatar-${color} ${large ? "large" : ""}`}>
-      {creator.avatar && !failed ? (
+      {creator.sample && samplePortrait(creator.handle) ? <img src={samplePortrait(creator.handle)} alt="" /> : creator.avatar && !failed ? (
         <img
           src={safeUrl(creator.avatar)}
           alt=""
@@ -133,28 +129,39 @@ function Modal({
   onClose,
   children,
   wide = false,
+  feedback = "",
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   wide?: boolean;
+  feedback?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     ref.current?.showModal();
-    return () => ref.current?.close();
+    return () => {
+      ref.current?.close();
+      document.body.style.overflow = overflow;
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
+    };
   }, []);
   return (
     <dialog
       ref={ref}
       className={`modal ${wide ? "wide" : ""}`}
+      aria-labelledby={titleId}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="modal-head">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button
           className="icon-button"
           aria-label="Close dialog"
@@ -164,57 +171,25 @@ function Modal({
         </button>
       </div>
       {children}
+      {feedback && <div className="dialog-feedback" role="status"><CheckCircle2 size={17} />{feedback}</div>}
     </dialog>
-  );
-}
-function RadarArt() {
-  return (
-    <div className="radar-art" aria-hidden="true">
-      <div className="radar-grid" />
-      <div className="radar-sweep" />
-      <div className="radar-orbit orbit-one" />
-      <div className="radar-orbit orbit-two" />
-      <div className="radar-orbit orbit-three" />
-      <div className="radar-core">
-        <Radio size={32} />
-      </div>
-      <span className="radar-coordinate coordinate-top">DISCOVERY ENGINE / 01</span>
-      <span className="radar-coordinate coordinate-bottom">FIVE NETWORKS. ONE CLEAR VIEW.</span>
-      <div className="radar-live-card"><span className="radar-live-icon"><Users size={17} /></span><div><strong>Follow the signal</strong><span>Profiles · Public contacts · Evidence</span></div><span className="radar-status-dot" /></div>
-      <div className="radar-person person-one">
-        MC
-        <span>
-          <PlatformMark platform="youtube" />
-        </span>
-      </div>
-      <div className="radar-person person-two">
-        AR
-        <span>
-          <PlatformMark platform="instagram" />
-        </span>
-      </div>
-      <div className="radar-person person-three">
-        PK
-        <span>
-          <PlatformMark platform="linkedin" />
-        </span>
-      </div>
-      <div className="radar-pill">
-        <span className="pulse-dot" /> Less noise. More signal.
-      </div>
-      <span className="art-spark one">✦</span>
-      <span className="art-spark two">✦</span>
-    </div>
   );
 }
 export default function App() {
   const search = useSearch();
   const [view, setView] = useState<View>("discover");
-  const [sidebar, setSidebar] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const beforeNewDraft = useRef<{brief: string; selected: Platform[]; depth: number} | null>(null);
+  const [initialConfig] = useState(() => {
+    const c = load<unknown>("config", null, true);
+    return isConfig(c) ? c : search.creators.some(c => c.sample) ? { brief: "AI tools & automation", keywords: ["AI tools", "automation"], platforms: [...platforms], depth: 5 } : null;
+  });
+  const [activeConfig, setActiveConfig] = useState<SearchConfig | null>(initialConfig);
   const [key, setKey] = useState("");
   const [connected, setConnected] = useState(false);
   const [unlockerZone, setUnlockerZone] = useState("");
   const [searchAvailable, setSearchAvailable] = useState(true);
+  const [metadataAvailable, setMetadataAvailable] = useState(true);
   const [searchZones, setSearchZones] = useState<string[]>([]);
   const [searchZone, setSearchZone] = useState("");
   const [keyModal, setKeyModal] = useState(false);
@@ -222,9 +197,9 @@ export default function App() {
   const [connecting, setConnecting] = useState(false);
   const [keyError, setKeyError] = useState("");
   const [help, setHelp] = useState(false);
-  const [brief, setBrief] = useState("");
-  const [selected, setSelected] = useState<Platform[]>([...platforms]);
-  const [depth, setDepth] = useState(5);
+  const [brief, setBrief] = useState(initialConfig?.keywords.join(", ") || "");
+  const [selected, setSelected] = useState<Platform[]>(initialConfig?.platforms || [...platforms]);
+  const [depth, setDepth] = useState(initialConfig?.depth || 5);
   const [formError, setFormError] = useState("");
   const [shortlist, setShortlist] = useState<Creator[]>(savedCreators);
   const [history, setHistory] = useState<SearchConfig[]>(recentSearches);
@@ -283,11 +258,16 @@ export default function App() {
     });
   }, [search.creators]);
   const resultsRef = useRef<HTMLElement>(null);
+  const recoveryRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 4500);
     return () => clearTimeout(timer);
   }, [toast]);
+  useEffect(() => {
+    if (keyModal || help || details?.id) setToast("");
+  }, [keyModal, help, details?.id]);
   useEffect(() => {
     if (!search.running) return;
     const start = Date.now();
@@ -299,7 +279,6 @@ export default function App() {
   }, [search.running]);
   function go(next: View) {
     setView(next);
-    setSidebar(false);
     setFilter("");
     setFilterPlatform("all");
     setEmailOnly(false);
@@ -334,17 +313,19 @@ export default function App() {
         unlockerZone: string;
         searchAvailable: boolean;
         searchZones?: string[];
+        metadataAvailable?: boolean;
       }>("connect", keyDraft.trim(), {});
       setKey(keyDraft.trim());
       setConnected(true);
       setUnlockerZone(response.unlockerZone);
       setSearchAvailable(response.searchAvailable);
+      setMetadataAvailable(response.metadataAvailable !== false);
       const zones = response.searchZones || [];
       setSearchZones(zones);
       setSearchZone(current => zones.includes(current) ? current : zones.length === 1 ? zones[0] : "");
       setKeyDraft("");
       setKeyModal(false);
-      setToast(response.searchAvailable ? "Key connected. Choose your search zone before searching. Service access and credits are checked when collection runs." : "Key connected. Set up a search zone for Instagram, LinkedIn & X. YouTube/TikTok require Web Scraper API access and credits.");
+      setToast(response.metadataAvailable === false ? "Key connected, but account metadata is unavailable. Check key permissions and reconnect to load your zones. YouTube/TikTok require Web Scraper API access and credits." : response.searchAvailable ? "Key connected. Choose your search zone before searching. Service access and credits are checked when collection runs." : "Key connected. Set up a search zone for Instagram, LinkedIn & X. YouTube/TikTok require Web Scraper API access and credits.");
     } catch (e) {
       setKeyError(e instanceof Error ? e.message : "Could not connect.");
     } finally {
@@ -396,6 +377,9 @@ export default function App() {
       return;
     }
     setSample(false);
+    setEditing(false);
+    beforeNewDraft.current = null;
+    setActiveConfig(c);
     setLastBrief(c.brief);
     setElapsed(0);
     setFilterPlatform("all");
@@ -407,14 +391,6 @@ export default function App() {
     );
     setHistory(next);
     store("history", next);
-    setTimeout(
-      () =>
-        resultsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        }),
-      100,
-    );
     await search.start(c, key, false, searchZone);
   }
   function demo() {
@@ -422,16 +398,54 @@ export default function App() {
     setSample(true);
     setLastBrief("AI tools & automation");
     setBrief("AI tools, automation");
+    setSelected([...platforms]);
+    setDepth(5);
+    setFormError("");
+    setEditing(false);
+    beforeNewDraft.current = null;
+    setActiveConfig({ brief: "AI tools & automation", keywords: ["AI tools", "automation"], platforms: [...platforms], depth: 5 });
     search.showSample(sampleCreators);
     go("discover");
-    setTimeout(
-      () =>
-        resultsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        }),
-      100,
-    );
+  }
+  function focusResults() {
+    if (search.jobs.length && !search.running && recoveryRef.current) {
+      recoveryRef.current.focus({ preventScroll: true });
+      window.scrollTo({ top: Math.floor(recoveryRef.current.getBoundingClientRect().top + window.scrollY) });
+      return;
+    }
+    if (search.running && progressRef.current) {
+      progressRef.current.focus({ preventScroll: true });
+      window.scrollTo({ top: Math.floor(progressRef.current.getBoundingClientRect().top + window.scrollY) });
+      return;
+    }
+    const heading = resultsRef.current?.querySelector<HTMLElement>("h2");
+    heading?.focus({ preventScroll: true });
+    resultsRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+  }
+  function editSearch(fresh = false) {
+    if (search.running) return;
+    if (fresh && search.jobs.length) {
+      setToast("Resume or discard your existing job references before starting a new search.");
+      return;
+    }
+    if (fresh) {
+      if (!beforeNewDraft.current) beforeNewDraft.current = {
+        brief: collectedConfig?.keywords.join(", ") || brief,
+        selected: collectedConfig?.platforms || selected,
+        depth: collectedConfig?.depth || depth,
+      };
+      setBrief("");
+      setSelected([...platforms]);
+      setDepth(5);
+    } else if (collectedConfig) {
+      beforeNewDraft.current = null;
+      setBrief(collectedConfig.keywords.join(", "));
+      setSelected([...collectedConfig.platforms]);
+      setDepth(collectedConfig.depth);
+    }
+    setFormError("");
+    setEditing(true);
+    window.setTimeout(() => document.getElementById("topic")?.focus(), 0);
   }
   function download(data: Creator[]) {
     const url = URL.createObjectURL(
@@ -443,6 +457,25 @@ export default function App() {
     a.click();
     URL.revokeObjectURL(url);
     setToast(`Exported ${data.length} creator${data.length === 1 ? "" : "s"}`);
+  }
+  function backToResults() {
+    if (beforeNewDraft.current) {
+      setBrief(beforeNewDraft.current.brief);
+      setSelected(beforeNewDraft.current.selected);
+      setDepth(beforeNewDraft.current.depth);
+      beforeNewDraft.current = null;
+    }
+    setEditing(false);
+  }
+  function profilePending(c: Creator) {
+    if (c.sample || c.enrichmentError) return false;
+    return c.profileStatus === "pending";
+  }
+  function profilePartial(c: Creator) {
+    return !c.sample && (Boolean(c.enrichmentError) || c.profileStatus === "partial");
+  }
+  function profileUnknown(c: Creator) {
+    return !c.sample && !c.profileStatus && !c.enrichmentError && !profilePending(c);
   }
   async function copy(value: string) {
     try {
@@ -520,9 +553,15 @@ export default function App() {
   const hasProgress = platforms.some(
     (p) => search.progress[p].phase !== "idle",
   );
+  const hasWork = search.creators.length > 0 || search.jobs.length > 0 || hasProgress || search.running;
+  const showComposer = !hasWork || editing;
+  const collectedConfig = search.jobs[0]?.config || activeConfig;
+  useEffect(() => {
+    if (hasWork && view === "discover" && !editing) focusResults();
+  }, [hasWork, view, editing, search.running]);
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${sidebar ? "open" : ""}`}>
+      <header className="masthead">
         <a
           className="brand"
           href="/"
@@ -539,102 +578,30 @@ export default function App() {
             <span className="brand-period">.</span>
           </span>
         </a>
-        <div className="workspace">
-          <span className="workspace-avatar">Y</span>
-          <div>
-            <strong>Your workspace</strong>
-            <small>Saved in this browser</small>
-          </div>
-          <span className="local-tag">BROWSER</span>
-        </div>
-        <div className="nav-caption">WORKSPACE</div>
         <nav aria-label="Main navigation">
           <button
             className={view === "discover" ? "active" : ""}
+            aria-current={view === "discover" ? "page" : undefined}
             onClick={() => go("discover")}
           >
-            <Compass size={19} /> Discover creators
-            <ArrowUpRight className="nav-arrow" size={15} />
+            Discover
           </button>
           <button
             className={view === "shortlist" ? "active" : ""}
+            aria-current={view === "shortlist" ? "page" : undefined}
             onClick={() => go("shortlist")}
           >
-            <Bookmark size={19} /> Your shortlist
+            Your shortlist
             <span className="nav-count">{shortlist.length}</span>
           </button>
           <button
             className={view === "history" ? "active" : ""}
+            aria-current={view === "history" ? "page" : undefined}
             onClick={() => go("history")}
           >
-            <History size={19} /> Recent searches
+            Recent searches
           </button>
         </nav>
-        <div className="sidebar-guide">
-          <div className="mini-orbits">
-            <Sparkles size={21} />
-          </div>
-          <strong>
-            Your next great partnership
-            <br />
-            starts with a signal.
-          </strong>
-          <p>
-            Real profiles. Public contacts.
-            <br />
-            Your own data, on your terms.
-          </p>
-          <button onClick={() => setHelp(true)}>
-            Take a quick tour <ArrowRight size={15} />
-          </button>
-        </div>
-        <div className="sidebar-bottom">
-          <button onClick={() => setHelp(true)}>
-            <HelpCircle size={18} /> How it works
-          </button>
-          <a
-            href="https://github.com/yaronbeen/signal-scout"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Terminal size={18} /> Run it locally <ArrowUpRight size={13} />
-          </a>
-          <div className="powered">
-            <ProviderCredit />
-          </div>
-        </div>
-      </aside>
-      {sidebar && (
-        <button
-          className="sidebar-scrim"
-          aria-label="Close navigation"
-          onClick={() => setSidebar(false)}
-        />
-      )}
-      <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <button
-              className="mobile-menu icon-button"
-              aria-label="Open navigation"
-              onClick={() => setSidebar(true)}
-            >
-              <Menu size={22} />
-            </button>
-            <span>Workspace</span>
-            <span className="crumb-slash">/</span>
-            <strong>
-              {view === "discover"
-                ? "Discover creators"
-                : view === "shortlist"
-                  ? "Your shortlist"
-                  : "Recent searches"}
-            </strong>
-          </div>
-          <div className="topbar-right">
-            <span className="byok-tag">
-              <ShieldCheck size={14} /> Bring your own key
-            </span>
             <button
               className={`connect-button ${connected ? "connected" : ""}`}
               onClick={() => {
@@ -644,51 +611,40 @@ export default function App() {
             >
               {connected ? <CheckCircle2 size={15} /> : <KeyRound size={15} />}
               {connected ? "Bright Data connected" : "Connect Bright Data"}
-              <span className={`connection-dot ${connected ? "on" : ""}`} />
             </button>
-          </div>
-        </header>
+      </header>
+      <div className="main-shell">
         <main>
           {view === "discover" && (
             <>
+              {hasWork && <div className="brief-ribbon">
+                <div className="brief-topic"><Search size={20} /><div><strong>{lastBrief}</strong><small>{(collectedConfig?.platforms || platforms).map(p => platformNames[p]).join(" · ")} · Up to {collectedConfig?.depth || 5} profiles / platform</small></div></div>
+                <div className="ribbon-actions">
+                  <button className="secondary-button" disabled={search.running} onClick={() => editing ? backToResults() : editSearch()}>{editing ? "Back to results" : "Edit search"}</button>
+                  <button className="secondary-button" disabled={search.running} onClick={() => editSearch(true)}>New search</button>
+                </div>
+              </div>}
+              {showComposer && <div className="arrival">
               <section className="hero">
                 <div className="hero-copy">
                   <div className="eyebrow">
-                    <span /> FIVE-PLATFORM CREATOR RESEARCH
+                      Creator discovery, with context
                   </div>
                   <h1>
                     Find your people.
                     <br />
-                    <span>Make some noise.</span>
+                    <span>Follow the signal.</span>
                   </h1>
                   <p>
-                    Discover creators across five platforms with Bright Data.
-                    <br className="desktop-break" /> Review profile evidence, find public emails,
-                    and export your shortlist.
+                    Discover creators across five platforms. See the evidence behind each match, find public contacts, and build your shortlist.
                   </p>
                   <div className="provider-strip"><ProviderCredit /></div>
-                  <p className="hero-setup-note">Live searches require your own Bright Data account, API key and credits. <button type="button" onClick={() => setHelp(true)}>Setup guide</button></p>
-                  <div className="hero-meta">
-                    <span>
-                      <span className="tiny-stack">
-                        <PlatformMark platform="youtube" />
-                        <PlatformMark platform="instagram" />
-                        <PlatformMark platform="tiktok" />
-                      </span>{" "}
-                      5 platforms. One search.
-                    </span>
-                    <span className="meta-divider" />
-                    <span>
-                      <ShieldCheck size={15} /> Your key. Your data.
-                    </span>
-                  </div>
+                  <SampleArt />
                 </div>
-                <RadarArt />
               </section>
               <form className="search-panel" onSubmit={begin}>
                 <div className="search-panel-heading">
                   <div>
-                    <span className="step-number">01</span>
                     <h2>Who are you looking for?</h2>
                   </div>
                   <button
@@ -701,7 +657,7 @@ export default function App() {
                     <ArrowUpRight size={14} />
                   </button>
                 </div>
-                <label className="topic-field-label" htmlFor="topic">Topic or keyword · up to 3, separated by commas</label>
+                <label className="topic-field-label" htmlFor="topic">Topics or keywords</label>
                 <label className="search-input-wrap">
                   <Search size={21} />
                   <input
@@ -710,18 +666,15 @@ export default function App() {
                     value={brief}
                     onChange={(e) => setBrief(e.target.value)}
                     maxLength={240}
-                    placeholder="Try “AI tools”, “sustainable skincare”, or “B2B marketing”"
+                    placeholder="AI tools, automation"
                     disabled={search.running}
                   />
-                  <span className="input-hint">
-                    TOPIC
-                  </span>
                 </label>
+                <p className="helper">Up to 3 focused topics, separated by commas.</p>
                   <div className="suggestions">
-                    <span>A little inspiration:</span>
                     {[
                       "AI & automation",
-                      "Skincare creators",
+                      "Skincare",
                       "SaaS & startups",
                     ].map((s, i) => (
                       <button
@@ -738,13 +691,13 @@ export default function App() {
                           );
                         }}
                       >
-                        {s} <ArrowUpRight size={11} />
+                        {s}
                       </button>
                     ))}
                   </div>
                 <div className="search-options">
-                  <div className="platform-options">
-                    <label>Search across</label>
+                  <fieldset className="platform-options">
+                    <legend>Search across</legend>
                     <div>
                       {platforms.map((p) => (
                         <button
@@ -767,7 +720,7 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </fieldset>
                   <div className="depth-option">
                     <label htmlFor="depth">Search depth</label>
                     <div className="select-wrap">
@@ -801,11 +754,8 @@ export default function App() {
                     <small>{searchZones.length > 1 ? 'You have multiple zones. Choose the one configured for working Google searches; the app does not test them with paid requests. ' : ''}If search fails, check this zone’s settings. Selecting another zone does not repeat any paid request.</small>
                   </div>
                 )}
+                <p className="spend-note"><strong>Your account pays for live collection.</strong><br />Public data only. Search, post collection and profile collection are separate paid stages. Depth limits records, not a currency budget.</p>
                 <div className="search-footer">
-                  <span>
-                    <ShieldCheck size={14} />
-                    Public data only. Usage billed to your Bright Data account.
-                  </span>
                   <button
                     className="primary-button"
                     type="submit"
@@ -824,12 +774,13 @@ export default function App() {
                     )}
                   </button>
                 </div>
-                <p className="usage-summary">
+                <details className="usage-disclosure"><summary>Collection limits & pricing</summary><p className="usage-summary">
                   Up to {depth} profiles per platform. YouTube/TikTok: up to {depth} posts per topic. Instagram/LinkedIn/X: 2 search pages per topic (profiles + content), then up to {depth} discovered posts per platform to identify authors. Search, post collection and profile collection are separate paid stages. <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">View pricing <ArrowUpRight size={11} /></a>
-                </p>
+                </p></details>
+                <p className="form-bottom">Your own key required. Sample mode needs no key.</p>
                 {connected && !searchAvailable && (
                   <p className="form-error">
-                    No active search zone found. For Instagram, LinkedIn, and X, <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">set up Bright Data’s search API</a>, then reconnect. YouTube and TikTok can run separately with Web Scraper API access and credits.
+                    {metadataAvailable ? <>No active search zone found. For Instagram, LinkedIn, and X, <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">set up Bright Data’s search API</a>, then reconnect.</> : <>Account metadata is unavailable. Check your key’s account-metadata permissions and reconnect to load search zones.</>} YouTube and TikTok can run separately with Web Scraper API access and credits.
                   </p>
                 )}
                 {formError && (
@@ -838,8 +789,10 @@ export default function App() {
                   </p>
                 )}
               </form>
+              </div>}
+              {hasWork && !showComposer && <button className="text-button recovery-sample" disabled={search.running || search.jobs.length > 0} onClick={demo}><Eye size={16} /> Explore a sample</button>}
               {search.jobs.length > 0 && !search.running && (
-                <div className="resume-banner">
+                <div className="resume-banner" ref={recoveryRef} tabIndex={-1} aria-label="Resume saved collection">
                   <History size={20} />
                   <div>
                     <strong>
@@ -847,8 +800,24 @@ export default function App() {
                       collection(s).
                     </strong>
                     <span>
-                      Continue saved work. Profiles ready for enrichment start a separate paid collection. Pausing or discarding references does not cancel Bright Data jobs; submitted jobs may still be billed.
+                      Continue saved work. Resume can start separately billed post or profile collection; existing snapshot jobs are checked without resubmitting them. Pausing or discarding references does not cancel Bright Data jobs; submitted jobs may still be billed.
                     </span>
+                    <span>Refresh clears your key; reconnect to resume. Results and job references are stored in this tab only and may be lost when you close the tab. Export results and retain snapshot IDs first.</span>
+                    <ul className="saved-job-list" aria-label="Saved collection references">
+                      {search.jobs.filter(j => j.stage !== "uncertain").map(j => <li key={j.platform}>
+                        <strong>{platformNames[j.platform]}</strong>
+                        <span>{j.stage === "queued" ? "Discovery queued" : j.stage === "ready" ? "Ready for separately paid profile collection" : j.stage === "posts-ready" ? "Ready for separately paid post collection" : j.stage === "posts" ? "Post collection" : j.stage === "enrich" ? "Profile collection" : "Content discovery"}</span>
+                        {j.snapshot && <div className="job-reference"><code>{j.snapshot}</code><button className="icon-button" aria-label={`Copy ${platformNames[j.platform]} snapshot ID`} onClick={() => copy(j.snapshot)}><Copy size={17} /></button></div>}
+                      </li>)}
+                    </ul>
+                    {connected && searchZones.length > 0 && !showComposer && <div className="search-zone-option">
+                      <label htmlFor="resume-search-zone">Bright Data search zone · Instagram, LinkedIn & X</label>
+                      <select id="resume-search-zone" value={searchZone} onChange={e => { setSearchZone(e.target.value); setFormError(""); }}>
+                        <option value="" disabled>Choose your search zone</option>
+                        {searchZones.map(zone => <option key={zone} value={zone}>{zone}</option>)}
+                      </select>
+                      <small>Select the zone configured for working Google searches. Selecting a zone does not run a paid test or repeat a request.</small>
+                    </div>}
                     {search.jobs
                       .filter((j) => j.stage === "uncertain")
                       .map((j) => (
@@ -864,7 +833,7 @@ export default function App() {
                           <button
                             className="secondary-button"
                             onClick={() => {
-                              if (j.uncertainStage === 'search') { if (window.confirm('Repeat this paid search? The earlier request may already have used Bright Data credits.')) search.retrySearch(j.platform); }
+                              if (j.uncertainStage === 'search') { if (window.confirm('Repeat this paid search? The earlier request may already have used Bright Data credits.')) { search.retrySearch(j.platform); setToast("New paid search authorized and queued. Select your search zone if needed, then use Resume search to submit it."); } }
                               else { setReconcile(j.platform); setSnapshotDraft(""); }
                             }}
                           >
@@ -875,7 +844,7 @@ export default function App() {
                   </div>
                   <button
                     className="secondary-button"
-                    disabled={search.jobs.every((j) => j.stage === "uncertain")}
+                    disabled={search.jobs.every((j) => j.stage === "uncertain") || (connected && searchZones.length > 1 && !searchZone && search.jobs.some(j => j.stage === "queued" && ["instagram", "linkedin", "x"].includes(j.platform)))}
                     onClick={() => {
                       if (!connected) setKeyModal(true);
                       else {
@@ -902,10 +871,13 @@ export default function App() {
                   </button>
                 </div>
               )}
+              {formError && !showComposer && <p className="form-error" role="alert">{formError}</p>}
               {(hasProgress || search.running) && (
                 <section
                   className="progress-panel"
                   aria-label="Collection progress"
+                  ref={progressRef}
+                  tabIndex={-1}
                 >
                   <div className="progress-heading">
                     <div>
@@ -919,7 +891,7 @@ export default function App() {
                       </strong>
                       <span>
                         {search.running
-                          ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s · ${done}/${selected.length} platforms complete`
+                          ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s · ${done}/${collectedConfig?.platforms.length || selected.length} platforms complete`
                           : "Each platform is collected independently"}
                       </span>
                     </div>
@@ -929,12 +901,13 @@ export default function App() {
                       </button>
                     )}
                   </div>
+                  {search.running && <p className="pause-note">Pausing stops this app from advancing collection. Submitted Bright Data jobs may keep running and be billed.</p>}
                   <div className="progress-platforms">
                     {platforms
                       .filter(
                         (p) =>
                           search.progress[p].phase !== "idle" ||
-                          selected.includes(p),
+                          (collectedConfig?.platforms || selected).includes(p),
                       )
                       .map((p) => (
                         <div
@@ -980,6 +953,8 @@ export default function App() {
                         setBrief(h.keywords.join(", "));
                         setSelected(h.platforms);
                         setDepth(h.depth);
+                        beforeNewDraft.current = null;
+                        setEditing(true);
                         go("discover");
                       }}
                     >
@@ -993,7 +968,8 @@ export default function App() {
                           <span>• {h.platforms.length} platforms</span>
                         </p>
                       </div>
-                      <ArrowUpRight size={20} />
+                       <ArrowRight size={20} />
+                      <span className="history-action">Edit brief</span>
                     </button>
                   ))}
                 </div>
@@ -1017,6 +993,7 @@ export default function App() {
           ) : (
             <>
               <section
+                hidden={view === "discover" && !hasWork}
                 className={`results-section ${view === "shortlist" ? "standalone-view" : ""}`}
                 ref={resultsRef}
               >
@@ -1025,7 +1002,7 @@ export default function App() {
                     {view === "shortlist" && (
                       <div className="eyebrow">GOOD FITS, ALL IN ONE PLACE</div>
                     )}
-                    <h2>
+                    <h2 tabIndex={-1}>
                       {view === "shortlist"
                         ? "Your next partnerships."
                         : source.length || search.running
@@ -1034,14 +1011,10 @@ export default function App() {
                     </h2>
                     <p>
                       {view === "shortlist" ? (
-                        "Your saved creators. Ready when you are."
+                        <>Your saved creators. Kept in this browser.{source.length > 0 && <> <strong>{source.length} creators</strong> · {emailCount} with public email · {usedPlatforms} platforms</>}</>
                       ) : source.length ? (
                         <>
-                          Signals for <strong>{lastBrief}</strong>{" "}
-                          <span className="results-subdot">·</span>{" "}
-                          {sample
-                            ? "Illustrative sample"
-                            : "Live Bright Data collection"}
+                          <strong>{source.length} {sample ? "sample creators" : "creators discovered"}</strong> · {emailCount} with public email · {usedPlatforms} platforms
                         </>
                       ) : (
                         hasProgress ? "Check the platform outcomes above. Broaden topics for no matches, or resolve the collection error and resume saved work." : "From a topic to a shortlist. All the context you need, none of the busywork."
@@ -1059,6 +1032,7 @@ export default function App() {
                     </button>
                   )}
                 </div>
+                {search.running && !source.length && <div className="creator-grid collection-skeletons" aria-hidden="true"><div className="skeleton-card"><span /><span /><span /><span /></div><div className="skeleton-card"><span /><span /><span /><span /></div></div>}
                 {source.length > 0 && (
                   <>
                     {source.some((c) => c.sample) && (
@@ -1066,53 +1040,11 @@ export default function App() {
                         <Sparkles size={16} />
                         <strong>Sample workspace</strong>
                         <span>
-                          Fictional creators and illustrative metrics. Connect
-                          your key to collect real profiles.
+                          Fictional creators and illustrative metrics. Contacts are illustrative. No live data or paid calls.
                         </span>
                       </div>
                     )}
-                    <div className="stats-strip">
-                      <div>
-                        <span className="stat-icon">
-                          <Users size={20} />
-                        </span>
-                        <div>
-                          <strong>
-                            {source.length}
-                            <small>creators discovered</small>
-                          </strong>
-                        </div>
-                        <span className="stat-detail">
-                          A world of potential
-                        </span>
-                      </div>
-                      <div>
-                        <span className="stat-icon green">
-                          <Mail size={20} />
-                        </span>
-                        <div>
-                          <strong>
-                            {emailCount}
-                            <small>with public email</small>
-                          </strong>
-                        </div>
-                        <span className="stat-detail">
-                          Source-linked contacts
-                        </span>
-                      </div>
-                      <div>
-                        <span className="stat-icon violet">
-                          <Layers3 size={20} />
-                        </span>
-                        <div>
-                          <strong>
-                            {usedPlatforms}
-                            <small>platforms represented</small>
-                          </strong>
-                        </div>
-                        <span className="stat-detail">One unified view</span>
-                      </div>
-                    </div>
+                    <p className="results-explanation">Topic matches are evidence signals, not audience-fit or campaign-performance scores.</p>
                     <div className="results-toolbar">
                       <div
                         className="platform-tabs"
@@ -1139,6 +1071,18 @@ export default function App() {
                           </button>
                         ))}
                       </div>
+                    </div>
+                    <label className="mobile-platform-label">Platform
+                      <select className="mobile-platform" aria-label="Filter by platform" value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)}>
+                        <option value="all">All creators ({source.length})</option>
+                        {platforms.map(p => <option key={p} value={p}>{platformNames[p]} ({source.filter(c => c.platform === p).length})</option>)}
+                      </select>
+                    </label>
+                    <div className="filter-row">
+                      <label className="filter-search">
+                        <Search size={18} />
+                        <input aria-label="Filter creators" value={filter} onChange={e => setFilter(e.target.value)} placeholder="Search name or bio" />
+                      </label>
                       <label className="email-toggle">
                         <input
                           type="checkbox"
@@ -1147,17 +1091,6 @@ export default function App() {
                         />
                         <span />
                         Has email
-                      </label>
-                    </div>
-                    <div className="filter-row">
-                      <label className="filter-search">
-                        <Search size={15} />
-                        <input
-                          aria-label="Filter creators"
-                          value={filter}
-                          onChange={(e) => setFilter(e.target.value)}
-                          placeholder="Filter by name or bio…"
-                        />
                       </label>
                       <div className="filter-selects">
                         <label>
@@ -1190,56 +1123,26 @@ export default function App() {
                     <div className="creator-grid">
                       {visible.map((c) => (
                         <article className="creator-card" key={c.id}>
-                          <div className="card-top">
-                            <span className="platform-label">
-                              <PlatformMark platform={c.platform} />
-                              {platformNames[c.platform]}
-                            </span>
-                            <button
-                              className={`save-button ${shortlist.some((s) => s.id === c.id) ? "saved" : ""}`}
-                              aria-label={`${shortlist.some((s) => s.id === c.id) ? "Remove" : "Save"} ${c.name}`}
-                              onClick={() => toggleSaved(c)}
-                            >
-                              <Bookmark
-                                size={18}
-                                fill={
-                                  shortlist.some((s) => s.id === c.id)
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                              />
-                            </button>
-                          </div>
                           <div className="creator-identity">
                             <Avatar creator={c} />
                             <div>
+                              <span className="platform-label"><PlatformMark platform={c.platform} />{platformNames[c.platform]}</span>
                               <h3>
                                 {c.name || c.handle}
                                 {c.verified && <CheckCircle2 size={14} />}
                               </h3>
                               <span>@{c.handle.replace(/^@/, "")}</span>
                             </div>
+                            <button className={`save-button ${shortlist.some(s => s.id === c.id) ? "saved" : ""}`} aria-label={`${shortlist.some(s => s.id === c.id) ? "Remove" : "Save"} ${c.name}`} aria-pressed={shortlist.some(s => s.id === c.id)} onClick={() => toggleSaved(c)}><Bookmark size={20} fill={shortlist.some(s => s.id === c.id) ? "currentColor" : "none"} /></button>
                           </div>
                           <p className="creator-bio">
-                            {c.bio || (view === 'discover' && search.jobs.some(j => j.platform === c.platform) ? 'Profile collection is pending. Review the discovery evidence.' : 'No bio returned. Review the discovery evidence.')}
+                            {c.bio || (profilePending(c) ? 'Profile collection is pending. Review the discovery evidence.' : 'No bio returned. Review the discovery evidence.')}
                           </p>
-                          <div className="creator-signals">
-                            <span className="relevance-badge">{c.sample ? 'Illustrative topic match' : relevanceLabel(c)}</span>
-                            {c.matchedTerms.length ? (
-                              <>
-                                <span className="signal-spark">
-                                  <Sparkles size={11} />
-                                </span>
-                                {c.matchedTerms.slice(0, 2).map((t) => (
-                                  <span key={t}>{t}</span>
-                                ))}
-                              </>
-                            ) : (
-                              <span className="review-fit">
-                                Review discovery evidence for fit
-                              </span>
-                            )}
-                          </div>
+                          <button className="card-evidence" onClick={() => { setDetails(c); setScanError(""); }}>
+                            <span className="evidence-label">{c.sample ? "Illustrative topic match" : relevanceLabel(c)}{c.matchedTerms.length > 0 && ` · ${c.matchedTerms.slice(0, 2).join(" / ")}`}</span>
+                            <span className="evidence-excerpt">{contentSignals(c)[0]?.text || c.evidence.find(e => e.kind === "profile" && c.matchedTerms.some(term => matchesTopic(e.text, term)))?.text || c.evidence.find(e => e.kind === "search" && c.matchedTerms.some(term => matchesTopic(e.text, term)))?.text || c.evidence.find(e => e.kind === "profile" || e.kind === "search")?.text || c.evidence[0]?.text || "View profile evidence"}</span>
+                            <ArrowRight size={18} />
+                          </button>
                           <div className="card-data">
                             <div>
                               <strong>{formatCount(c.followers)}</strong>
@@ -1258,11 +1161,11 @@ export default function App() {
                                     <span className="small-dot" />
                                     Public email
                                   </strong>
-                                  <span>Source available</span>
+                                  <span>{c.sample ? "Illustrative source" : "Source available"}</span>
                                 </>
                               ) : (
                                 <>
-                                  <strong>{view === 'discover' && search.jobs.some(j => j.platform === c.platform) ? 'Email collection pending' : 'No email found'}</strong>
+                                  <strong>{profilePartial(c) ? 'Email unavailable · partial profile' : profilePending(c) ? 'Email collection pending' : profileUnknown(c) ? 'Email collection unknown' : 'No email found'}</strong>
                                   <span>
                                     {c.websites.length
                                       ? "Website available"
@@ -1272,24 +1175,6 @@ export default function App() {
                               )}
                             </div>
                           </div>
-                          <button
-                            className="card-evidence"
-                            onClick={() => {
-                              setDetails(c);
-                              setScanError("");
-                            }}
-                          >
-                            <span className="evidence-icon">
-                              <Eye size={14} />
-                            </span>
-                            <span>
-                              {c.evidence.find(
-                                (e) =>
-                                  e.kind === "content" || e.kind === "search",
-                              )?.text || "View profile evidence"}
-                            </span>
-                            <ArrowUpRight size={15} />
-                          </button>
                           <div className="card-bottom">
                             <span>
                               <span
@@ -1297,9 +1182,9 @@ export default function App() {
                               />
                               {c.sample
                                 ? "Illustrative sample"
-                                : c.enrichmentError
-                                  ? "Partial profile"
-                                  : "Collected with Bright Data"}
+                                 : profilePartial(c)
+                                   ? "Partial profile"
+                                   : profilePending(c) ? "Profile collection pending" : profileUnknown(c) ? "Profile collection status unknown" : "Collected with Bright Data"}
                             </span>
                             <button
                               onClick={() => {
@@ -1360,47 +1245,17 @@ export default function App() {
                         Find your people <ArrowRight size={16} />
                       </button>
                     </div>
-                  ) : (
-                    <div className="how-grid" hidden={hasProgress}>
-                      <div>
-                        <div className="how-icon">
-                          <Compass size={25} />
-                          <span>01</span>
-                        </div>
-                        <h3>Start with a signal</h3>
-                        <p>
-                          A niche, a topic, or a keyword.
-                          <br />
-                          Tell us what a good fit looks like.
-                        </p>
-                      </div>
-                      <div>
-                        <div className="how-icon">
-                          <Radio size={25} />
-                          <span>02</span>
-                        </div>
-                        <h3>Go beyond the handle</h3>
-                        <p>
-                          Real profiles, audience counts, and
-                          <br />
-                          public contacts. Collected live.
-                        </p>
-                      </div>
-                      <div>
-                        <div className="how-icon">
-                          <Bookmark size={25} />
-                          <span>03</span>
-                        </div>
-                        <h3>Make your shortlist</h3>
-                        <p>
-                          Save the standouts. Export the data.
-                          <br />
-                          Your next partnership starts here.
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  ) : hasWork && !search.jobs.length ? <div className="empty-state">
+                    <Search size={28} /><h3>{platforms.some(p => search.progress[p].phase === "error") ? "Collection needs attention." : "No matches in this collection."}</h3>
+                    <p>{platforms.some(p => search.progress[p].phase === "error") ? "Review the platform errors above, then edit your brief when ready." : "Try a broader topic or another platform. A new collection uses Bright Data credits."}</p>
+                    <button className="secondary-button" onClick={() => editSearch()}>Edit search</button>
+                  </div> : null)}
               </section>
+              {view === "discover" && !hasWork && <section className="journey" aria-label="How discovery works">
+                <div><span>01</span><h3>Start with a topic.</h3><p>Choose your niche, platforms, and a focused collection depth.</p></div>
+                <div><span>02</span><h3>See why they surfaced.</h3><p>Review public profiles, content evidence, and source-linked contacts.</p></div>
+                <div><span>03</span><h3>Keep the good fits.</h3><p>Save creators in this browser. Export your shortlist as a CSV.</p></div>
+              </section>}
             </>
           )}
           {search.storageWarning && (
@@ -1414,7 +1269,7 @@ export default function App() {
               <ProviderCredit />{" "}
               <span className="footer-separator">/</span>
               <button onClick={() => setHelp(true)}>
-                How it works <ArrowUpRight size={12} />
+                Setup guide <ArrowUpRight size={12} />
               </button>
             </div>
           </footer>
@@ -1422,8 +1277,9 @@ export default function App() {
       </div>
       {keyModal && (
         <Modal
+          feedback={toast}
           title={
-            connected ? "Your Bright Data connection" : "Connect your own Bright Data account"
+            connected ? "Your Bright Data connection" : "Connect your Bright Data."
           }
           onClose={() => {
             if (!connecting) {
@@ -1432,10 +1288,7 @@ export default function App() {
             }
           }}
         >
-          <div className="connect-art">
-            <KeyRound size={28} />
-            <span>YOUR KEY. YOUR ACCOUNT. YOUR USAGE.</span>
-          </div>
+          {connected && <div className="connected-status"><CheckCircle2 size={20} /><div><strong>Key connected</strong><p>{metadataAvailable ? "Account metadata checked. Service permissions, credits, and zone health are checked when collection runs." : "Account metadata is unavailable. Check your key’s account-metadata permissions and reconnect to load zones. Service permissions, credits, and zone health are not confirmed."}</p></div></div>}
           <p className="modal-intro">
             Each visitor uses their own Bright Data key and pays for their own searches. Signal Scout does not provide a shared key or free live collection. Sample mode needs no key.
           </p>
@@ -1461,7 +1314,7 @@ export default function App() {
             />
             <p className="key-help">
               <ShieldCheck size={14} />
-              Kept only in this tab’s memory. Sent over HTTPS through this website’s relay to Bright Data; not saved to browser storage or the server. Refreshing or closing the tab clears it.
+              Kept only in this tab’s memory. On the public website, sent over HTTPS through the stateless relay to Bright Data; not saved to browser storage or the server. Refreshing or closing the tab clears your key.
             </p>
             {keyError && (
               <p className="form-error" role="alert">
@@ -1493,13 +1346,14 @@ export default function App() {
             <summary>New to Bright Data? Open the step-by-step setup checklist</summary>
             <ProviderSetup />
           </details>
-          <div className="connection-info">
-            <strong>After you connect</strong>
+          <details className="connection-info" open>
+            <summary>After connecting & resuming work</summary>
             <p>Choose your search zone in the form, enter 1–3 short topics, choose platforms and depth, then click Discover creators. Search and profile collection are separate paid stages; depth limits records, not a currency budget.</p>
             <small>
               Connecting checks account metadata without a paid search. It does not verify every product permission, your balance, or that the selected zone works. Collections can take several minutes; resume pending jobs rather than starting them again.
             </small>
-          </div>
+            <p>After a refresh, reconnect your key and resume saved jobs. Resume can start separately billed post collection or a separately paid profile-enrichment stage; existing snapshot jobs are checked without resubmitting them. Results and job references are stored in this tab only and may be lost when you close the tab. Export results and retain snapshot IDs first. Submitted provider jobs may keep running and be billed after pausing.</p>
+          </details>
           <p className="operator-note">Signal Scout is an open-source app built by Yaron Been. Bright Data provides the search and collection APIs. Your key passes through this app’s relay to Bright Data and is not saved.</p>
           {connected && (
             <button
@@ -1507,6 +1361,7 @@ export default function App() {
               disabled={search.running || scanning}
               onClick={() => {
                 setKey("");
+                setKeyDraft("");
                 setConnected(false);
                  setUnlockerZone("");
                  setSearchZones([]);
@@ -1522,6 +1377,7 @@ export default function App() {
       )}
       {help && (
         <Modal
+          feedback={toast}
           title="From a signal to a shortlist."
           onClose={() => setHelp(false)}
         >
@@ -1580,7 +1436,7 @@ export default function App() {
           </div>
           <div className="connection-info">
             <strong>Using the live website</strong>
-            <p>No installation is needed. Connect your own key, choose your search zone, and search. No owner key is provided. After a refresh, reconnect your key and use Resume search to check existing collections. Do not repeat an unresolved paid search until you check your Bright Data usage.</p>
+            <p>No installation is needed. Connect your own key, choose your search zone, and search. No owner key is provided. After a refresh, reconnect your key and use Resume search. Resume can start separately billed post or profile stages; existing snapshots are checked without resubmission. Closing the tab may lose results and job references; export results and keep snapshot IDs first. Do not repeat an unresolved paid search until you check your Bright Data usage.</p>
           </div>
           <div className="local-instructions">
             <Terminal size={19} />
@@ -1603,7 +1459,8 @@ export default function App() {
               <li>Complete the Bright Data checklist above. The agent cannot supply your account, credits, or API key.</li>
               <li>Open <a href="http://localhost:8787" target="_blank" rel="noreferrer">http://localhost:8787</a>, click Connect Bright Data, and enter your key there.</li>
               <li>Select a working search zone for Instagram, LinkedIn & X, choose topics/platforms, and start your search.</li>
-              <li>Keep the local server running. If you refresh, reconnect your key and resume saved jobs.</li>
+              <li>Keep the local server running. If you refresh, reconnect your key and resume saved jobs. Resume can start separately billed post or profile stages; existing snapshots are checked without resubmission.</li>
+              <li>Before closing the tab, export results and keep snapshot IDs. Tab-local results and job references may be lost after closing; submitted Bright Data jobs may still run and be billed.</li>
             </ol>
             <p>Local prerequisites: Git and Node.js 22+. No Cloudflare login is required locally. You can explore a fictional sample without a key.</p>
           </div>
@@ -1611,6 +1468,7 @@ export default function App() {
       )}
       {details && (
         <Modal
+          feedback={keyModal ? "" : toast}
           title="Creator intelligence"
           onClose={() => {
             if (!scanning) setDetails(null);
@@ -1646,6 +1504,7 @@ export default function App() {
               Fictional sample profile. Links and contacts are illustrative.
             </div>
           )}
+          {!details.sample && (profilePartial(details) || profilePending(details) || profileUnknown(details)) && <p className="collection-state">{profilePartial(details) ? "Partial profile · enrichment did not complete" : profilePending(details) ? "Profile collection pending · discovery evidence is available" : "Profile collection status unknown · restored evidence remains available"}</p>}
           <p className="detail-bio">
             {details.bio || "No public bio was returned."}
           </p>
@@ -1660,13 +1519,27 @@ export default function App() {
               </span>
             </div>
             <div>
-              <strong>{details.contacts.length}</strong>
+              <strong>{!details.sample && !details.contacts.length && (profilePartial(details) || profilePending(details) || profileUnknown(details)) ? profilePending(details) ? "Pending" : "Unknown" : details.contacts.length}</strong>
               <span>public emails found</span>
             </div>
             <div>
               <strong>{details.matchedTerms.length}</strong>
               <span>matching search terms</span>
             </div>
+          </div>
+          <div className="detail-section">
+            <div className="detail-section-title">
+              <Eye size={17} /><h3>Why they surfaced</h3><span>{details.sample ? "ILLUSTRATIVE EVIDENCE" : "COLLECTED EVIDENCE"}</span>
+            </div>
+            {details.matchedTerms.length > 0 && <div className="detail-terms">{details.matchedTerms.map(t => <span key={t}><Sparkles size={12} />{t}</span>)}</div>}
+            {details.evidence.slice(0, 5).map((e, i) => <div className="evidence-row" key={i}>
+              <span>{e.kind === "search" ? "Search result" : e.kind === "content" ? "Collected content" : "Public profile"}</span>
+              {e.publishedAt && <span> · {new Date(e.publishedAt).toLocaleDateString()}</span>}
+              <p>{e.text.slice(0, 1000)}</p>
+              {!details.sample && <a href={safeUrl(e.url)} target="_blank" rel="noreferrer">Open evidence <ArrowUpRight size={14} /></a>}
+            </div>)}
+            {!details.evidence.length && <p className="no-contact">No discovery evidence was returned for this profile.</p>}
+            <small>Topic signals are literal matches in collected text, not a prediction of audience fit or campaign performance.</small>
           </div>
           <div className="detail-section">
             <div className="detail-section-title">
@@ -1701,8 +1574,7 @@ export default function App() {
               ))
             ) : (
               <p className="no-contact">
-                No public email found in the collected profile or content. A
-                profile or website can still be a useful starting point.
+                {profilePartial(details) ? "Email collection is incomplete because profile enrichment failed. Review the partial evidence and collection recovery." : profilePending(details) ? "Email collection is pending. Review the discovery evidence while profile collection completes." : profileUnknown(details) ? "Email collection status is unknown for this restored profile. Review the available evidence; a new collection uses Bright Data credits." : "No public email found in the collected profile or content. A profile or website can still be a useful starting point."}
               </p>
             )}
             {details.websites.length > 0 && (
@@ -1740,7 +1612,9 @@ export default function App() {
                   to your account.
                   {connected &&
                     !unlockerZone &&
-                    " Enable a Web Unlocker zone in Bright Data to use this feature."}
+                    (metadataAvailable
+                      ? " Enable a Web Unlocker zone in Bright Data to use this feature."
+                      : " Account metadata is unavailable, so your Web Unlocker zones could not be loaded. Check your key’s account-metadata permissions and reconnect.")}
                 </small>
               </>
             )}
@@ -1749,45 +1623,6 @@ export default function App() {
                 {scanError}
               </p>
             )}
-          </div>
-          <div className="detail-section">
-            <div className="detail-section-title">
-              <Eye size={17} />
-              <h3>Why they surfaced</h3>
-              <span>COLLECTED EVIDENCE</span>
-            </div>
-            {details.matchedTerms.length > 0 && (
-              <div className="detail-terms">
-                {details.matchedTerms.map((t) => (
-                  <span key={t}>
-                    <Sparkles size={12} />
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
-            {details.evidence.slice(0, 5).map((e, i) => (
-              <div className="evidence-row" key={i}>
-                <span>
-                  {e.kind === "search"
-                    ? "Search result"
-                    : e.kind === "content"
-                      ? "Collected content"
-                      : "Public profile"}
-                </span>
-                {e.publishedAt && <span> · {new Date(e.publishedAt).toLocaleDateString()}</span>}
-                <p>{e.text.slice(0, 1000)}</p>
-                {!details.sample && (
-                  <a href={safeUrl(e.url)} target="_blank" rel="noreferrer">
-                    Open evidence <ArrowUpRight size={12} />
-                  </a>
-                )}
-              </div>
-            ))}
-            <small>
-              Topic signals are literal matches in collected text, not a
-              prediction of audience fit or campaign performance.
-            </small>
           </div>
           <div className="detail-bottom">
             <span>
@@ -1811,6 +1646,7 @@ export default function App() {
       )}
       {reconcile && (
         <Modal
+          feedback={toast}
           title="Reconnect an existing collection"
           onClose={() => setReconcile(null)}
         >
@@ -1855,7 +1691,7 @@ export default function App() {
           </a>
         </Modal>
       )}
-      {toast && (
+      {toast && !keyModal && !help && !details && !reconcile && (
         <div className="toast" role="status">
           <CheckCircle2 size={17} />
           {toast}

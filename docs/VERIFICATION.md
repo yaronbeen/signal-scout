@@ -1,6 +1,22 @@
 # Release verification — 2026-10-13
 
-## Automated checks
+## Clear Signal production acceptance
+
+The approved design is integrated and deployed. Five independent triple-review rounds are tracked in [design/ITERATIONS.md](design/ITERATIONS.md); the final clarity, technical, and audience/visual gates all returned **SHIP with no material findings**. Core corrections pass **52 unit/contract checks, TypeScript, and production build**. The main session's final complete browser run passed **106 tests**, with **10 intentional duplicate/device-specific skips**. A subsequent one-line X-filter target correction passed production build, six-width responsive checks, and 31-state accessibility checks with no failures.
+
+**Current deployed Worker version:** `cb2b942a-dea4-4d1b-a929-5dc52e53dcf1`. Hosted desktop/mobile smoke passed health, actual CSP, eight labeled sample profiles, details/Escape, shortlist, collection-status CSV, human/agent setup handoffs, and visitor-key dialog. No browser exceptions, horizontal overflow, external font requests, or attempted paid API calls occurred. Evidence: [hosted-release-smoke.json](design/evidence/hosted-release-smoke.json).
+
+Independent accessibility evidence includes normal/large-text contrast, checked control target sizes, keyboard modal focus/Escape/scrolling, short-height viewports, reduced motion, copy feedback, and key replacement/disconnect lifetime. Final `production-accessibility.json` records zero findings, browser errors, or external font requests. These checks are scoped acceptance evidence, not a WCAG certification.
+
+Current live evidence is in [LIVE_CONTENT_VERIFICATION.md](LIVE_CONTENT_VERIFICATION.md). The bounded original run and explicitly authorized Instagram/LinkedIn follow-up exercised all five profile collectors and the three post collectors, with TikTok native discovery/profile evidence reused from exact-topic snapshots. Initial provider search failures are retained in the report. LinkedIn's empty repost-placeholder attribution defect was fixed and verified freely against captured responses; actual-author live LinkedIn enrichment is not mislabeled as passed. No blanket claim that every topic/zone succeeds is made.
+
+Setup validation includes a clean lockfile install, unit/contract checks and production build in an isolated directory, then local Worker health/assets/sample smoke without Cloudflare login. Provider scraper/SERP/Web Unlocker guide links were fetched successfully. README/in-app copied setup prompt consistency is regression-tested. `npm audit` reported zero vulnerabilities, and the public-source credential-pattern scan reported zero matches.
+
+The non-billable release smoke can be repeated with `node docs/design/verify-hosted.mjs`. It verifies health, actual CSP, sample/details/shortlist/status-bearing CSV, full setup handoffs, visitor-key dialog, self-hosted fonts, and desktop/mobile overflow/errors. Provider calls are blocked. Set `SIGNAL_SCOUT_URL=http://localhost:8787` for local verification; the recorded evidence includes the actual target URL.
+
+The historical content-first release evidence below remains useful for prior deployment checks; it is not the final certification of the redesigned UI.
+
+## Previous content-first release checks
 
 - `npm run check`: **39 unit/integration checks passed**, TypeScript passed, production build passed.
 - `npm run test:e2e`: **44 browser tests passed**, covering desktop (1440px), mobile (390px), content-author discovery/ranking, post snapshot pause/refresh/resume, uncertain post reconciliation, terminal post failure fallback, transient polling recovery, topic-only search/legacy history, platform audience labels, explicit agent/human setup guidance, visitor-key clearing, required multi-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.

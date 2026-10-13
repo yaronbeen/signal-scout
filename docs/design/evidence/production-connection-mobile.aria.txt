@@ -1,0 +1,223 @@
+- banner:
+  - link "signalscout.":
+    - /url: /
+    - img
+    - text: signalscout.
+  - navigation "Main navigation":
+    - button "Discover"
+    - button "Your shortlist 1"
+    - button "Recent searches"
+  - button "Connect Bright Data"
+- main:
+  - img
+  - strong: AI tools & automation
+  - text: YouTube · Instagram · TikTok · LinkedIn · X · Up to 5 profiles / platform
+  - button "Edit search"
+  - button "New search"
+  - button "Explore a sample":
+    - img
+    - text: Explore a sample
+  - heading "Meet your next collaborators." [level=2]
+  - paragraph:
+    - strong: 8 sample creators
+    - text: · 5 with public email · 5 platforms
+  - button "Export CSV 8":
+    - img
+    - text: Export CSV 8
+  - img
+  - strong: Sample workspace
+  - text: Fictional creators and illustrative metrics. Contacts are illustrative. No live data or paid calls.
+  - paragraph: Topic matches are evidence signals, not audience-fit or campaign-performance scores.
+  - text: Platform
+  - combobox "Filter by platform":
+    - option "All creators (8)" [selected]
+    - option "YouTube (2)"
+    - option "Instagram (2)"
+    - option "TikTok (2)"
+    - option "LinkedIn (1)"
+    - option "X (1)"
+  - img
+  - textbox "Filter creators":
+    - /placeholder: Search name or bio
+  - checkbox "Has email"
+  - text: Has email
+  - combobox "Minimum audience":
+    - option "Any audience size" [selected]
+    - option "1K+ followers / subscribers"
+    - option "10K+ followers / subscribers"
+    - option "100K+ followers / subscribers"
+  - combobox "Sort creators":
+    - option "Content relevance" [selected]
+    - option "Audience size"
+    - option "Email available"
+  - article:
+    - text: TikTok
+    - heading "Jordan Ellis" [level=3]
+    - text: "@jordantechtalk"
+    - button "Save Jordan Ellis":
+      - img
+    - paragraph: Your friendly neighborhood tech explainer. Making AI a little less intimidating, one video at a time.
+    - button "Illustrative topic match · AI tools / automation AI tools that actually earn their place in your stack":
+      - text: Illustrative topic match · AI tools / automation AI tools that actually earn their place in your stack
+      - img
+    - strong: 128K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: LB YouTube
+    - heading "Lena Brooks" [level=3]
+    - text: "@lenalabs"
+    - button "Save Lena Brooks":
+      - img
+    - paragraph: Thoughtful tech reviews for real working days. Honest walkthroughs of AI tools and productivity systems.
+    - button "Illustrative topic match · AI tools / automation An honest look at AI-powered research tools":
+      - text: Illustrative topic match · AI tools / automation An honest look at AI-powered research tools
+      - img
+    - strong: 56.7K
+    - text: subscribers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: YouTube
+    - heading "Maya Chen" [level=3]
+    - text: "@mayamakes"
+    - button "Remove Maya Chen" [pressed]:
+      - img
+    - paragraph: I turn complicated AI tools into practical workflows. Weekly tutorials for founders, marketers, and curious builders.
+    - button "Illustrative topic match · AI tools / automation AI workflows for a one-person marketing team":
+      - text: Illustrative topic match · AI tools / automation AI workflows for a one-person marketing team
+      - img
+    - strong: 84.2K
+    - text: subscribers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: Instagram
+    - heading "Alex Rivera" [level=3]
+    - text: "@buildwithalex"
+    - button "Save Alex Rivera":
+      - img
+    - paragraph: Building better systems for small businesses. AI tools, automation, and the occasional coffee experiment.
+    - button "Illustrative topic match · AI tools / automation Three automations I use every single day":
+      - text: Illustrative topic match · AI tools / automation Three automations I use every single day
+      - img
+    - strong: 42.6K
+    - text: followers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: PK LinkedIn
+    - heading "Priya Kapoor" [level=3]
+    - text: "@priyagrowth"
+    - button "Save Priya Kapoor":
+      - img
+    - paragraph: Growth advisor for early-stage SaaS. Writing about AI, lean marketing teams, and systems that scale.
+    - button "Illustrative topic match · AI tools / automation What a lean marketing stack looks like in practice":
+      - text: Illustrative topic match · AI tools / automation What a lean marketing stack looks like in practice
+      - img
+    - strong: 31.6K
+    - text: followers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: SF X
+    - heading "Sam Foster" [level=3]
+    - text: "@samships"
+    - button "Save Sam Foster":
+      - img
+    - paragraph: Indie builder. Testing automation tools in public. Notes on growing a small internet business.
+    - button "Illustrative topic match · AI tools / automation My favorite AI workflow this week":
+      - text: Illustrative topic match · AI tools / automation My favorite AI workflow this week
+      - img
+    - strong: 18.7K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: TP Instagram
+    - heading "Theo Park" [level=3]
+    - text: "@theotools"
+    - button "Save Theo Park":
+      - img
+    - paragraph: A little tech, a little design. Tools that help creative people get their time back.
+    - button "Illustrative topic match · AI tools / automation My five favorite AI shortcuts for content creation":
+      - text: Illustrative topic match · AI tools / automation My five favorite AI shortcuts for content creation
+      - img
+    - strong: 23.8K
+    - text: followers
+    - strong: No email found
+    - text: Website available Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - article:
+    - text: NW TikTok
+    - heading "Nora Williams" [level=3]
+    - text: "@noraworks"
+    - button "Save Nora Williams":
+      - img
+    - paragraph: Marketing without the chaos. Automation ideas for e-commerce founders and solo marketers.
+    - button "Illustrative topic match · AI tools / automation Turn one product shoot into a week of content":
+      - text: Illustrative topic match · AI tools / automation Turn one product shoot into a week of content
+      - img
+    - strong: 67.3K
+    - text: followers
+    - strong: Public email
+    - text: Illustrative source Illustrative sample
+    - button "View details":
+      - text: View details
+      - img
+  - img
+  - text: Sample data is fictional and intended to demonstrate the workspace. Built by Yaron Been · Creator research with source evidence.
+  - link "Powered by Bright Data":
+    - /url: https://brightdata.com
+    - text: Powered by
+    - strong: Bright Data
+    - img
+  - button "Setup guide":
+    - text: Setup guide
+    - img
+- dialog "Connect your Bright Data.":
+  - heading "Connect your Bright Data." [level=2]
+  - button "Close dialog":
+    - img
+  - paragraph: Each visitor uses their own Bright Data key and pays for their own searches. Signal Scout does not provide a shared key or free live collection. Sample mode needs no key.
+  - text: Bright Data API key
+  - textbox "Bright Data API key":
+    - /placeholder: Paste your Bright Data API key
+  - paragraph:
+    - img
+    - text: Kept only in this tab’s memory. On the public website, sent over HTTPS through the stateless relay to Bright Data; not saved to browser storage or the server. Refreshing or closing the tab clears your key.
+  - button "Connect Bright Data":
+    - text: Connect Bright Data
+    - img
+  - link "Find your API key in Bright Data":
+    - /url: https://brightdata.com/cp/setting/users
+    - text: Find your API key in Bright Data
+    - img
+  - group: New to Bright Data? Open the step-by-step setup checklist
+  - group:
+    - text: After connecting & resuming work
+    - paragraph: Choose your search zone in the form, enter 1–3 short topics, choose platforms and depth, then click Discover creators. Search and profile collection are separate paid stages; depth limits records, not a currency budget.
+    - text: Connecting checks account metadata without a paid search. It does not verify every product permission, your balance, or that the selected zone works. Collections can take several minutes; resume pending jobs rather than starting them again.
+    - paragraph: After a refresh, reconnect your key and resume saved jobs. Resume can start separately billed post collection or a separately paid profile-enrichment stage; existing snapshot jobs are checked without resubmitting them. Results and job references are stored in this tab only and may be lost when you close the tab. Export results and retain snapshot IDs first. Submitted provider jobs may keep running and be billed after pausing.
+  - paragraph: Signal Scout is an open-source app built by Yaron Been. Bright Data provides the search and collection APIs. Your key passes through this app’s relay to Bright Data and is not saved.
