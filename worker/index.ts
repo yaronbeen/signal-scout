@@ -148,7 +148,10 @@ async function upstream(
   }
   if (envelope && typeof envelope.status_code === "number") {
     if (envelope.status_code >= 400)
-      throw upstreamError(envelope.status_code, "");
+      throw new ApiError(
+        `Bright Data returned search origin HTTP ${envelope.status_code}. Check the selected zone’s configuration and usage in your Bright Data dashboard. The search may have used credits and will not be repeated automatically.`,
+        envelope.status_code,
+      );
     if (raw)
       return typeof envelope.body === "string"
         ? envelope.body
@@ -349,6 +352,9 @@ export async function handleRequest(
         searchAvailable:
           Array.isArray(zones) &&
           zones.some((z) => z.type === "serp" && z.status === "active"),
+        searchZones: Array.isArray(zones)
+          ? zones.filter(z => z.type === 'serp' && z.status === 'active').map(z => z.name)
+          : [],
         unlockerZone: Array.isArray(zones)
           ? zones.find((z) => z.type === "unblocker" && z.status === "active")
               ?.name || ""
@@ -367,12 +373,17 @@ export async function handleRequest(
         type: string;
         status: string;
       }[];
-      const zone = Array.isArray(zones)
-        ? zones.find((z) => z.type === "serp" && z.status === "active")?.name
-        : "";
+      const available = Array.isArray(zones)
+        ? zones.filter(z => z.type === 'serp' && z.status === 'active')
+        : [];
+      if (b.searchZone !== undefined && (typeof b.searchZone !== 'string' || b.searchZone.length > 128))
+        throw new ApiError('Choose an active Bright Data search zone.');
+      const zone = b.searchZone
+        ? available.find(z => z.name === b.searchZone)?.name
+        : available[0]?.name;
       if (!zone)
         throw new ApiError(
-          "Enable a SERP API in your Bright Data dashboard to discover Instagram, LinkedIn, and X creators. The app detects its name automatically. YouTube and TikTok can still run.",
+          "Choose an active SERP API zone in your Bright Data dashboard to discover Instagram, LinkedIn, and X creators. Reconnect to refresh available zones. YouTube and TikTok can still run.",
           409,
         );
       const site = {
@@ -416,11 +427,11 @@ export async function handleRequest(
             ]
           : [],
       );
-      if (!records.length)
-        throw (
-          settled.find((r) => r.status === "rejected")?.reason ||
-          new ApiError("No search results were returned.", 502)
-        );
+      if (!records.length) {
+        const failure = settled.find(r => r.status === 'rejected');
+        const reason = failure?.status === 'rejected' ? failure.reason : undefined;
+        throw new ApiError(`Search zone “${zone}”: ${reason instanceof ApiError ? reason.message : 'No search results were returned.'}`, reason instanceof ApiError ? reason.status : 502);
+      }
       return json({ records, failures });
     }
     if (url.pathname === "/api/trigger") {

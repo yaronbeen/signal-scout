@@ -178,6 +178,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* Motion direction: a precise discovery instrument, with restrained depth. */
+.search-zone-option { display: grid; gap: 8px; margin: 0 24px 20px; }
+.search-zone-option label { color: #304869; font-size: 11px; font-weight: 500; }
+.search-zone-option select { width: 100%; min-height: 40px; border: 1px solid #d3e1f5; border-radius: 8px; padding: 8px 12px; background: #fff; color: #091b36; font: inherit; font-size: 12px; }
+.search-zone-option small { color: #526a8b; font-size: 11px; line-height: 1.6; }
 .main-shell { background: radial-gradient(ellipse at 88% 0%, #dfe9ff80, transparent 34%), #f5f8ff; }
 .hero h1 { color: #091b36; }
 .how-grid p, .results-footnote, .progress-item small, .progress-item p,

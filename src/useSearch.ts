@@ -117,6 +117,7 @@ export function useSearch() {
     key: string,
     signal: AbortSignal,
     existing?: Job,
+    searchZone = "",
   ) {
     let candidates = existing?.candidates || [];
     const startedAt = Date.now();
@@ -165,6 +166,7 @@ export function useSearch() {
             platform: p,
             keywords: config.keywords,
             depth: config.depth,
+            ...(searchZone ? { searchZone } : {}),
           });
             if (!Array.isArray(response.records)) throw new RequestError('Unreadable search results. Review Bright Data usage before repeating this paid search.', 0);
           } catch (e) {
@@ -261,7 +263,7 @@ export function useSearch() {
         });
     }
   }
-  async function start(config: SearchConfig, key: string, resume = false) {
+  async function start(config: SearchConfig, key: string, resume = false, searchZone = "") {
     if (controller.current) return;
     const abort = new AbortController();
     controller.current = abort;
@@ -282,6 +284,7 @@ export function useSearch() {
         key,
         abort.signal,
         "stage" in j ? (j as Job) : undefined,
+        searchZone,
       );
     await Promise.allSettled(work.map(run));
     controller.current = null;

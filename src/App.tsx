@@ -202,6 +202,8 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [unlockerZone, setUnlockerZone] = useState("");
   const [searchAvailable, setSearchAvailable] = useState(true);
+  const [searchZones, setSearchZones] = useState<string[]>([]);
+  const [searchZone, setSearchZone] = useState("");
   const [keyModal, setKeyModal] = useState(false);
   const [keyDraft, setKeyDraft] = useState("");
   const [connecting, setConnecting] = useState(false);
@@ -320,11 +322,15 @@ export default function App() {
         connected: boolean;
         unlockerZone: string;
         searchAvailable: boolean;
+        searchZones?: string[];
       }>("connect", keyDraft.trim(), {});
       setKey(keyDraft.trim());
       setConnected(true);
       setUnlockerZone(response.unlockerZone);
       setSearchAvailable(response.searchAvailable);
+      const zones = response.searchZones || [];
+      setSearchZones(zones);
+      setSearchZone(current => zones.includes(current) ? current : zones[0] || "");
       setKeyDraft("");
       setKeyModal(false);
       setToast("Bright Data connected. You’re ready to discover.");
@@ -394,7 +400,7 @@ export default function App() {
         }),
       100,
     );
-    await search.start(c, key);
+    await search.start(c, key, false, searchZone);
   }
   function demo() {
     if (search.running || search.jobs.length) return;
@@ -821,6 +827,15 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+                {connected && searchZones.length > 0 && (
+                  <div className="search-zone-option">
+                    <label htmlFor="search-zone">Bright Data search zone · Instagram, LinkedIn & X</label>
+                    <select id="search-zone" value={searchZone} disabled={search.running} onChange={e => setSearchZone(e.target.value)}>
+                      {searchZones.map(zone => <option key={zone} value={zone}>{zone}</option>)}
+                    </select>
+                    <small>If search fails, check this zone’s settings. Selecting another zone does not repeat any paid request.</small>
+                  </div>
+                )}
                 <div className="search-footer">
                   <span>
                     <ShieldCheck size={14} />
@@ -899,7 +914,7 @@ export default function App() {
                       if (!connected) setKeyModal(true);
                       else {
                         setSample(false);
-                        search.start(search.jobs[0].config, key, true);
+                        search.start(search.jobs[0].config, key, true, searchZone);
                       }
                     }}
                   >

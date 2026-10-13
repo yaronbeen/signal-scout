@@ -1,5 +1,30 @@
 import {test, expect} from '@playwright/test';
 
+test('visitor can select an account search zone without submitting or replaying paid requests', async ({page}) => {
+  let searches = 0;
+  await page.route('**/api/**', async route => {
+    if (route.request().url().endsWith('/connect')) return route.fulfill({json:{connected:true,searchAvailable:true,searchZones:['first','working'],unlockerZone:''}});
+    if (route.request().url().endsWith('/discover')) {
+      searches++;
+      expect(route.request().postDataJSON().searchZone).toBe('working');
+      return route.fulfill({json:{records:[],failures:[]}});
+    }
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await page.getByLabel('Bright Data API key').fill('fixture-key-only');
+  await page.getByRole('dialog').getByRole('button',{name:'Connect Bright Data'}).click();
+  const zone = page.getByLabel('Bright Data search zone · Instagram, LinkedIn & X');
+  await expect(zone).toHaveValue('first');
+  await zone.selectOption('working');
+  expect(searches).toBe(0);
+  await page.getByLabel('Topic or keyword',{exact:true}).fill('ai ugc');
+  for (const p of ['YouTube','TikTok','LinkedIn','X']) await page.locator('.search-panel').getByRole('button',{name:p,exact:true}).click();
+  await page.getByRole('main').getByRole('button',{name:'Discover creators',exact:true}).click();
+  await expect(page.locator('.progress-item.done')).toHaveCount(1);
+  expect(searches).toBe(1);
+});
+
 test('brand attribution, animation and setup guidance remain usable across widths', async ({page}) => {
   await page.goto('/');
   await expect(page.locator('.hero').getByRole('link', {name:'Powered by Bright Data'})).toBeVisible();

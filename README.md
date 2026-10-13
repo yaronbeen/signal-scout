@@ -23,7 +23,7 @@ You can explore the interface without a key using **Explore a sample**. Sample c
 ### What your Bright Data account needs
 
 - An API key with **Web Scraper API** access and available credits.
-- An active **SERP API** for Instagram, LinkedIn, and X discovery. Create one at [Bright Data → Create an API](https://brightdata.com/cp/web_access/new). The app finds its name automatically; there is no zone name to copy into the app.
+- An active, working **SERP API zone** for Instagram, LinkedIn, and X discovery. Create one at [Bright Data → Create an API](https://brightdata.com/cp/web_access/new). The app lists your active search zones; select the one you want to use. Active status does not guarantee successful search-engine access.
 - Optional: an active **Web Unlocker API** to scan a creator's linked website for public email. This is a separate, user-triggered request.
 
 [Find your API key](https://brightdata.com/cp/setting/users) · [SERP setup guide](https://docs.brightdata.com/scraping-automation/serp-api/quickstart)
@@ -42,16 +42,19 @@ The agent handles setup; you enter your API key in the browser. Never paste the 
 
 ### Manual local setup
 
-Install [Node.js 22 or newer](https://nodejs.org/), then:
+Install [Node.js 22 or newer](https://nodejs.org/) and [Git](https://git-scm.com/downloads), then:
 
 ```bash
 git clone https://github.com/yaronbeen/signal-scout.git
 cd signal-scout
 npm ci
+npm run check
 npm run dev
 ```
 
 Open **http://localhost:8787**. Works on Windows, macOS, and Linux. No Docker, Python, database, or environment file required.
+
+Keep the terminal/server running while using the app. Connect your Bright Data key in the browser and choose a working search zone for Instagram, LinkedIn, and X. A Cloudflare account/login is only needed to deploy publicly. Sample mode needs no key; live collection requires provider access and available credits. After a refresh, reconnect your key to resume the saved snapshot jobs.
 
 ## What you get
 

@@ -41,7 +41,7 @@ test('trigger sends official bounded object schema and forwards visitor key only
 });
 test('connection detects active zones and returns no account data or keys', async () => {
   const response = await handleRequest(request('connect', {}), env, mock(() => reply([{ name: 'disabled', type: 'serp', status: 'disabled' }, { name: 'search', type: 'serp', status: 'active' }, { name: 'unlocker', type: 'unblocker', status: 'active' }])));
-  assert.deepEqual(await response.json(), { connected: true, searchAvailable: true, unlockerZone: 'unlocker' });
+  assert.deepEqual(await response.json(), { connected: true, searchAvailable: true, searchZones: ['search'], unlockerZone: 'unlocker' });
 });
 test('SERP discovery detects user zone, pins query to platform and preserves organic evidence', async () => {
   let calls = 0;
@@ -57,6 +57,28 @@ test('SERP discovery detects user zone, pins query to platform and preserves org
 test('missing SERP entitlement has an actionable partial-results error', async () => {
   const response = await handleRequest(request('discover', { platform: 'x', keywords: ['AI'], depth: 5 }), env, mock(() => reply([])));
   assert.equal(response.status, 409); assert.match((await response.json()).error, /YouTube and TikTok can still run/);
+});
+test('selected search zone must belong to the visitor account and never falls back or retries', async () => {
+  for (const selected of ['working', 'disabled', 'someone_else']) {
+    let searches = 0;
+    const response = await handleRequest(request('discover', { platform: 'instagram', keywords: ['ai ugc'], depth: 5, searchZone: selected }), env, mock((url, init) => {
+      if (url.endsWith('get_all_zones')) return reply([{name:'first',type:'serp',status:'active'}, {name:'working',type:'serp',status:'active'}, {name:'disabled',type:'serp',status:'disabled'}]);
+      searches++;
+      assert.equal(JSON.parse(String(init?.body)).zone, 'working');
+      return reply({organic:[]});
+    }));
+    assert.equal(response.status, selected === 'working' ? 200 : 409);
+    assert.equal(searches, selected === 'working' ? 1 : 0);
+  }
+});
+test('origin error identifies the selected zone without exposing raw provider content', async () => {
+  const response = await handleRequest(request('discover', {platform:'x',keywords:['ai ugc'],depth:5,searchZone:'search'}), env, mock(url => url.endsWith('get_all_zones') ? reply([{name:'search',type:'serp',status:'active'}]) : reply({status_code:403,body:'SECRET_TOKEN '+token})));
+  assert.equal(response.status, 403);
+  const body = await response.text();
+  assert.match(body, /Search zone.*search/);
+  assert.match(body, /origin HTTP 403/);
+  assert.ok(!body.includes(token));
+  assert.ok(!body.includes('SECRET_TOKEN'));
 });
 test('status rejects arbitrary paths and result treats eventual-consistency response as pending', async () => {
   const invalid = await handleRequest(request('status?id=../../secrets'), env, mock(() => { throw new Error('must not fetch'); }));
