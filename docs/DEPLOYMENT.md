@@ -13,7 +13,8 @@ The local server and hosted deployment use the same Worker and built assets. No 
 ## Troubleshooting
 - **401:** reconnect with a current Bright Data key.
 - **403:** check key product permissions.
-- **409 on search discovery:** enable an active SERP API for Instagram/LinkedIn/X. Its name is auto-detected.
+- **409 on search discovery:** enable an active SERP API for Instagram/LinkedIn/X, reconnect, and select its name in the search form.
+- **Search zone timeout/origin error:** active status does not prove search-engine access. Check the named zone’s configuration and usage; select another working account zone if available. Paid search retries require explicit authorization; no automatic failover.
 - **No website scan available:** enable a Web Unlocker zone; optional profile email extraction still works.
 - **429:** wait at least a minute. Do not repeatedly retry.
 - **Slow profile scraper:** pause/resume the existing snapshot; the Bright Data dashboard shows its status.

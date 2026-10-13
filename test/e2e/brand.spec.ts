@@ -1,4 +1,47 @@
 import {test, expect} from '@playwright/test';
+import {localSetupPrompt} from '../../src/setup';
+
+test('setup guide gives agent and human steps; visitor key clears on refresh and disconnect', async ({page, context}) => {
+  let connects = 0;
+  await context.grantPermissions(['clipboard-read','clipboard-write']);
+  await page.route('**/api/**', async route => {
+    expect(route.request().url()).toContain('/connect');
+    expect(route.request().headers().authorization).toBe('Bearer fixture-visitor-key-only');
+    connects++;
+    return route.fulfill({json:{connected:true,searchAvailable:true,searchZones:['visitor-search'],unlockerZone:''}});
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Setup guide',exact:true}).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading',{name:'Your Bright Data checklist'})).toBeVisible();
+  await expect(dialog.getByRole('heading',{name:'For your coding agent'})).toBeVisible();
+  await expect(dialog.getByRole('heading',{name:'For you: once the agent finishes'})).toBeVisible();
+  await dialog.getByRole('button',{name:'Copy setup prompt'}).click();
+  expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe(localSetupPrompt);
+  await expect(dialog.getByRole('link',{name:'http://localhost:8787',exact:true})).toBeVisible();
+  expect(await dialog.evaluate(el=>el.scrollWidth <= el.clientWidth)).toBeTruthy();
+  await page.getByRole('button',{name:'Close dialog'}).click();
+  await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await expect(page.getByRole('dialog').getByText(/It does not verify every product permission/)).toBeVisible();
+  await page.getByLabel('Bright Data API key').fill('fixture-visitor-key-only');
+  await page.getByRole('dialog').getByRole('button',{name:'Connect Bright Data'}).click();
+  await expect(page.getByRole('button',{name:'Bright Data connected'})).toBeVisible();
+  const storage = await page.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));
+  expect(storage).not.toContain('fixture-visitor-key-only');
+  expect(connects).toBe(1);
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Connect Bright Data',exact:true})).toBeVisible();
+  expect(connects).toBe(1);
+  await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await expect(page.getByLabel('Bright Data API key')).toHaveValue('');
+  await page.getByLabel('Bright Data API key').fill('fixture-visitor-key-only');
+  await page.getByRole('dialog').getByRole('button',{name:'Connect Bright Data'}).click();
+  await page.getByRole('button',{name:'Bright Data connected'}).click();
+  await page.getByRole('button',{name:'Disconnect and forget key'}).click();
+  await expect(page.getByRole('button',{name:'Connect Bright Data',exact:true})).toBeVisible();
+  await expect(page.getByLabel('Bright Data search zone · Instagram, LinkedIn & X')).toHaveCount(0);
+  expect(connects).toBe(2);
+});
 
 test('visitor can select an account search zone without submitting or replaying paid requests', async ({page}) => {
   let searches = 0;
@@ -36,8 +79,9 @@ test('brand attribution, animation and setup guidance remain usable across width
   await page.emulateMedia({reducedMotion:'reduce'});
   expect(await page.locator('.radar-sweep').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
   await page.getByRole('button',{name:'Connect Bright Data',exact:true}).click();
+  await page.getByText('New to Bright Data? Open the step-by-step setup checklist',{exact:true}).click();
   await expect(page.getByRole('dialog').getByRole('link',{name:/Set up search/})).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('link',{name:'Bright Data pricing'})).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('link',{name:'Check pricing'})).toBeVisible();
 });
 
 for (const outcome of ['lost response', 'origin 403', 'origin 429']) test(`${outcome} never auto-repeats paid SERP discovery after reload`, async ({page}) => {

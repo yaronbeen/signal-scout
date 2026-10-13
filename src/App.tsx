@@ -48,10 +48,23 @@ import {
   type SearchConfig,
 } from "./types";
 import { useSearch } from "./useSearch";
+import { localSetupPrompt } from "./setup";
 
 type View = "discover" | "shortlist" | "history";
 function ProviderCredit() {
   return <a className="provider-credit" href="https://brightdata.com" target="_blank" rel="noreferrer"><span>Powered by</span><strong className="brand-wordmark">Bright Data</strong><ArrowUpRight size={12} /></a>;
+}
+function ProviderSetup() {
+  return <section className="provider-setup" aria-label="Bright Data setup steps">
+    <h3>Your Bright Data checklist</h3>
+    <ol>
+      <li><strong>Create your account and check credits.</strong> Live searches are billed to your Bright Data account. <a href="https://brightdata.com" target="_blank" rel="noreferrer">Create an account</a> · <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">Check pricing</a></li>
+      <li><strong>Enable Web Scraper API access for your key.</strong> Required to collect creator profiles on all five platforms and discover YouTube/TikTok content. <a href="https://docs.brightdata.com/scraping-automation/web-scraper-api/overview" target="_blank" rel="noreferrer">Web Scraper API guide</a></li>
+      <li><strong>Set up a SERP API search zone for Instagram, LinkedIn & X.</strong> A zone is a named search service in your Bright Data account. After connecting, choose it in the search form. “Active” does not guarantee it can complete a search. <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">Set up search for Instagram, LinkedIn & X</a></li>
+      <li><strong>Optional: enable Web Unlocker.</strong> Only needed for the “Scan website” email check, which is separately billed. Profile email discovery works without it. <a href="https://docs.brightdata.com/scraping-automation/web-unlocker/quickstart" target="_blank" rel="noreferrer">Website scan setup</a></li>
+      <li><strong>Copy your API key and enter it here.</strong> Use your own key, only in the app’s key field. <a href="https://brightdata.com/cp/setting/users" target="_blank" rel="noreferrer">Find your API key</a></li>
+    </ol>
+  </section>;
 }
 function PlatformMark({ platform }: { platform: Platform }) {
   return (
@@ -333,7 +346,7 @@ export default function App() {
       setSearchZone(current => zones.includes(current) ? current : zones[0] || "");
       setKeyDraft("");
       setKeyModal(false);
-      setToast("Bright Data connected. You’re ready to discover.");
+      setToast(response.searchAvailable ? "Key connected. Choose your search zone before searching. Service access and credits are checked when collection runs." : "Key connected. Set up a search zone for Instagram, LinkedIn & X. YouTube/TikTok require Web Scraper API access and credits.");
     } catch (e) {
       setKeyError(e instanceof Error ? e.message : "Could not connect.");
     } finally {
@@ -653,6 +666,7 @@ export default function App() {
                     and export your shortlist.
                   </p>
                   <div className="provider-strip"><ProviderCredit /></div>
+                  <p className="hero-setup-note">Live searches require your own Bright Data account, API key and credits. <button type="button" onClick={() => setHelp(true)}>Setup guide</button></p>
                   <div className="hero-meta">
                     <span>
                       <span className="tiny-stack">
@@ -864,7 +878,7 @@ export default function App() {
                 </p>
                 {connected && !searchAvailable && (
                   <p className="form-error">
-                    YouTube and TikTok are ready. For Instagram, LinkedIn, and X, <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">set up Bright Data’s search API</a>. Its name is detected automatically.
+                    No active search zone found. For Instagram, LinkedIn, and X, <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">set up Bright Data’s search API</a>, then reconnect. YouTube and TikTok can run separately with Web Scraper API access and credits.
                   </p>
                 )}
                 {formError && (
@@ -1451,7 +1465,7 @@ export default function App() {
       {keyModal && (
         <Modal
           title={
-            connected ? "Your Bright Data connection" : "Plug into the signal."
+            connected ? "Your Bright Data connection" : "Connect your own Bright Data account"
           }
           onClose={() => {
             if (!connecting) {
@@ -1462,11 +1476,10 @@ export default function App() {
         >
           <div className="connect-art">
             <KeyRound size={28} />
-            <span>YOUR KEY. YOUR CREDITS. YOUR CONTROL.</span>
+            <span>YOUR KEY. YOUR ACCOUNT. YOUR USAGE.</span>
           </div>
           <p className="modal-intro">
-            Connect your Bright Data account to discover real creators. No
-            subscription to Signal Scout, and no extra AI key.
+            Each visitor uses their own Bright Data key and pays for their own searches. Signal Scout does not provide a shared key or free live collection. Sample mode needs no key.
           </p>
           <form onSubmit={connect}>
             <label className="field-label" htmlFor="api-key">
@@ -1490,8 +1503,7 @@ export default function App() {
             />
             <p className="key-help">
               <ShieldCheck size={14} />
-              Your key stays in memory for this tab. Never saved to browser
-              storage or our server.
+              Kept only in this tab’s memory. Sent over HTTPS through this website’s relay to Bright Data; not saved to browser storage or the server. Refreshing or closing the tab clears it.
             </p>
             {keyError && (
               <p className="form-error" role="alert">
@@ -1519,19 +1531,16 @@ export default function App() {
           >
             Find your API key in Bright Data <ExternalLink size={13} />
           </a>
+          <details className="setup-disclosure">
+            <summary>New to Bright Data? Open the step-by-step setup checklist</summary>
+            <ProviderSetup />
+          </details>
           <div className="connection-info">
-            <strong>What you’ll need</strong>
-            <p>
-              An API key with Web Scraper API access and available credits.
-              An active SERP API enables Instagram, LinkedIn, and X discovery;
-              its name is detected automatically. An active Web Unlocker zone
-              enables optional website email scans.
-            </p>
+            <strong>After you connect</strong>
+            <p>Choose your search zone in the form, enter 1–3 short topics, choose platforms and depth, then click Discover creators. Search and profile collection are separate paid stages; depth limits records, not a currency budget.</p>
             <small>
-              Searches take a few minutes. No credits are spent checking your
-              connection.
+              Connecting checks account metadata without a paid search. It does not verify every product permission, your balance, or that the selected zone works. Collections can take several minutes; resume pending jobs rather than starting them again.
             </small>
-            <div className="setup-links"><a href="https://brightdata.com" target="_blank" rel="noreferrer">Create an account <ExternalLink size={12} /></a><a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">Set up search for Instagram, LinkedIn & X <ExternalLink size={12} /></a><a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">Bright Data pricing <ExternalLink size={12} /></a></div>
           </div>
           <p className="operator-note">Signal Scout is an open-source app built by Yaron Been. Bright Data provides the search and collection APIs. Your key passes through this app’s relay to Bright Data and is not saved.</p>
           {connected && (
@@ -1541,7 +1550,9 @@ export default function App() {
               onClick={() => {
                 setKey("");
                 setConnected(false);
-                setUnlockerZone("");
+                 setUnlockerZone("");
+                 setSearchZones([]);
+                 setSearchZone("");
                 setKeyModal(false);
                 setToast("Bright Data disconnected");
               }}
@@ -1561,7 +1572,7 @@ export default function App() {
               [
                 "01",
                 "Connect your Bright Data key",
-                "Get your key from Bright Data account settings. It stays in memory for this tab. Your account pays for the data collected.",
+                "Use the checklist below to enable the required services. Enter your own key in the app. On this website it passes through the relay to Bright Data; your account pays for collection. Choose your search zone after connecting.",
               ],
               [
                 "02",
@@ -1597,25 +1608,35 @@ export default function App() {
               keyword matches.
             </p>
           </div>
+          <ProviderSetup />
+          <div className="connection-info">
+            <strong>Using the live website</strong>
+            <p>No installation is needed. Connect your own key, choose your search zone, and search. No owner key is provided. After a refresh, reconnect your key and use Resume search to check existing collections. Do not repeat an unresolved paid search until you check your Bright Data usage.</p>
+          </div>
           <div className="local-instructions">
             <Terminal size={19} />
             <strong>Prefer to run it locally?</strong>
-            <p>Paste this into Claude Code, OpenCode, or Cursor:</p>
-            <code>
-              Clone https://github.com/yaronbeen/signal-scout, read AGENTS.md,
-              install dependencies, run checks, start the app locally, and
-              verify /api/health. I’ll enter my Bright Data key in the app.
-            </code>
+            <h3>For your coding agent</h3>
+            <p>Open Claude Code, OpenCode, or Cursor and paste this. The agent starts the app and explains your remaining steps.</p>
+            <code>{localSetupPrompt}</code>
             <button
               className="secondary-button"
               onClick={() =>
                 copy(
-                  "Clone https://github.com/yaronbeen/signal-scout, read AGENTS.md, install dependencies, run checks, start the app locally, and verify /api/health. I’ll enter my Bright Data key in the app.",
+                  localSetupPrompt,
                 )
               }
             >
               <Copy size={14} /> Copy setup prompt
             </button>
+            <h3>For you: once the agent finishes</h3>
+            <ol>
+              <li>Complete the Bright Data checklist above. The agent cannot supply your account, credits, or API key.</li>
+              <li>Open <a href="http://localhost:8787" target="_blank" rel="noreferrer">http://localhost:8787</a>, click Connect Bright Data, and enter your key there.</li>
+              <li>Select a working search zone for Instagram, LinkedIn & X, choose topics/platforms, and start your search.</li>
+              <li>Keep the local server running. If you refresh, reconnect your key and resume saved jobs.</li>
+            </ol>
+            <p>Local prerequisites: Git and Node.js 22+. No Cloudflare login is required locally. You can explore a fictional sample without a key.</p>
           </div>
         </Modal>
       )}

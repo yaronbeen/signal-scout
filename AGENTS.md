@@ -5,12 +5,16 @@ Premium, reliable influencer discovery for nontechnical marketers. Five platform
 
 ## First-time setup
 1. Require Node.js >=22. If unavailable, explain the prerequisite and install using the user's platform-appropriate version manager when permitted.
+   Check Git is available for cloning; explain/install missing prerequisites with permission. No Cloudflare login is required locally.
 2. Run `npm ci`.
 3. Run `npm run check`.
 4. Start `npm run dev` as a persistent/background process.
 5. Verify `http://localhost:8787/api/health` returns `{ "ok": true }`.
 6. Open or provide `http://localhost:8787`.
 7. Tell the user to enter their Bright Data key in the app. Do not request it in chat or configure it as a hosted secret.
+8. Give the human an explicit handoff checklist: Bright Data account with available credits and Web Scraper API access; an active, working SERP API zone for Instagram/LinkedIn/X; optional Web Unlocker only for website scans; enter their key in the app, select their search zone, choose topics/platforms, and search. Link to the setup guides in README.md. Do not claim a connected key proves all service permissions or zone health.
+9. Explain that the local server must stay running and a refresh clears the in-memory key; reconnect then resume existing snapshot jobs. Sample mode needs no key. On the public website, visitors supply their own key, passed over HTTPS through the stateless relay to Bright Data; there is no shared owner key.
+10. Do not submit paid setup tests, scan websites, or probe/fail over to other zones without explicit user authorization. Account metadata checks are non-billable; real discovery/enrichment are paid stages.
 
 ## Commands
 - `npm run check`: unit/integration checks and build.

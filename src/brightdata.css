@@ -182,6 +182,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .search-zone-option label { color: #304869; font-size: 11px; font-weight: 500; }
 .search-zone-option select { width: 100%; min-height: 40px; border: 1px solid #d3e1f5; border-radius: 8px; padding: 8px 12px; background: #fff; color: #091b36; font: inherit; font-size: 12px; }
 .search-zone-option small { color: #526a8b; font-size: 11px; line-height: 1.6; }
+.provider-setup { margin: 20px 0; padding: 18px; background: #f3f7ff; border: 1px solid #d3e1f5; border-radius: 12px; }
+.provider-setup h3, .local-instructions h3 { font-size: 14px; color: #091b36; margin: 0 0 12px; }
+.provider-setup ol, .local-instructions ol { margin: 0; padding-left: 20px; color: #435b7b; font-size: 13px; line-height: 1.7; }
+.provider-setup li + li, .local-instructions li + li { margin-top: 10px; }
+.provider-setup strong { color: #22395b; }
+.provider-setup a, .local-instructions a { color: #2054b3; text-decoration: underline; text-underline-offset: 3px; }
+.local-instructions h3 { margin-top: 20px; }
+.hero-copy > .hero-setup-note { font-size: 12px; line-height: 1.7; margin-top: 14px; color: #435b7b; }
+.hero-setup-note button { padding: 0; border: 0; background: none; font: inherit; color: #2054b3; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.setup-disclosure { margin: 20px 0; border: 1px solid #d3e1f5; border-radius: 10px; padding: 14px; background: #f3f7ff; }
+.setup-disclosure summary { font-size: 13px; font-weight: 500; line-height: 1.7; color: #2054b3; cursor: pointer; }
+.setup-disclosure .provider-setup { border: 0; margin: 14px 0 0; padding: 0; }
+.connection-info p, .connection-info small, .key-help, .operator-note { font-size: 12px; line-height: 1.7; }
 .main-shell { background: radial-gradient(ellipse at 88% 0%, #dfe9ff80, transparent 34%), #f5f8ff; }
 .hero h1 { color: #091b36; }
 .how-grid p, .results-footnote, .progress-item small, .progress-item p,

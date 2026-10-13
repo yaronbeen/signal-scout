@@ -35,10 +35,21 @@ If one product is unavailable, other platforms can still complete. Missing email
 Paste this into **Claude Code, OpenCode, or Cursor**:
 
 ```text
-Clone https://github.com/yaronbeen/signal-scout, read AGENTS.md, install dependencies, run checks, start the app locally, and verify /api/health. I’ll enter my Bright Data key in the app.
+Clone https://github.com/yaronbeen/signal-scout and read AGENTS.md. Check Git and Node.js 22+; explain or install missing prerequisites with my permission. Run npm ci and npm run check, start npm run dev as a persistent process, verify http://localhost:8787/api/health has ok: true, and open http://localhost:8787. Then give me the human setup steps: create a Bright Data account with available credits and Web Scraper API access, enable a SERP API zone for Instagram/LinkedIn/X, optionally enable Web Unlocker for website email scans, enter my key only in the app, and select a working search zone. Explain that connecting checks account metadata, not whether every paid service works. Keep the server running; after refresh I reconnect my key and resume existing jobs. Do not request my key in chat, store it, configure a hosted key, or submit paid test searches without asking me. No Cloudflare login is needed locally.
 ```
 
 The agent handles setup; you enter your API key in the browser. Never paste the key into the agent prompt.
+
+### Your steps after the agent finishes
+
+1. Complete the [Bright Data account checklist](#what-your-bright-data-account-needs): credits, Web Scraper API access, and a working SERP API zone. Web Unlocker is optional.
+2. Open http://localhost:8787 and click **Connect Bright Data**. Enter your key only in the app.
+3. Choose your search zone for Instagram, LinkedIn, and X, then choose topics/platforms and depth. Connecting checks account metadata, not product permissions, balance, or search-zone health.
+4. Keep the local server running. After a refresh, reconnect your key and resume existing jobs.
+
+### Visiting the live website
+
+No installation is required. Every visitor supplies their own key and pays for their own Bright Data usage. The tab keeps the key in memory and sends it over HTTPS through the website’s stateless relay to Bright Data. The application does not save it or provide a shared owner key. Refreshing or closing the tab clears the key; reconnect to resume saved jobs. Sample mode needs no key.
 
 ### Manual local setup
 

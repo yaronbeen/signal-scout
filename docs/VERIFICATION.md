@@ -3,7 +3,7 @@
 ## Automated checks
 
 - `npm run check`: **31 unit/integration checks passed**, TypeScript passed, production build passed.
-- `npm run test:e2e`: **28 browser tests passed**, covering desktop (1440px), mobile (390px), account search-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.
+- `npm run test:e2e`: **30 browser tests passed**, covering desktop (1440px), mobile (390px), explicit agent/human setup guidance, visitor-key clearing, account search-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.
 - Separate read-only reviewer audited orchestration, provenance, recovery, and sample isolation. Reported blockers were fixed and regression-tested; final targeted verdict: **SHIP**.
 - A subsequent four-perspective review covered branding, nontechnical onboarding, copywriting, and engineering; changes are documented in [REVIEW.md](REVIEW.md).
 
@@ -20,6 +20,16 @@ Live discovery and profile enrichment completed for every platform using the dev
 - **X:** 5 discovered profiles; 5 returned; 0 collection-error records; no public email; audience counts on 5; websites on 4.
 
 These are small contract-validation searches, not email-coverage benchmarks or a guarantee that every returned profile is a suitable influencer. Search results can include brand accounts or weak matches; source evidence enables human qualification.
+
+### Follow-up hosted search-zone verification
+
+After diagnosing a first-active-zone timeout, the hosted app was verified with an explicitly selected working account zone using the topic `ai ugc`. Each platform used one bounded discovery request and one enrichment snapshot, without automatic retries:
+
+- **Instagram:** 1 discovered and successfully enriched profile; no public email.
+- **LinkedIn:** 5 discovered and successfully enriched profiles; no public email.
+- **X:** 5 discovered and successfully enriched profiles; 1 with public email.
+
+All three completed through the deployed relay. This confirms the discovery/enrichment path with that working zone, not universal availability of every visitor's zone. The user's pre-existing YouTube/TikTok snapshots were not available for this check and were not resubmitted.
 
 Optional Web Unlocker website scanning also returned HTTP 200 through the shipping Worker against a real creator-linked website. No public email was found on that page; no email was fabricated.
 
