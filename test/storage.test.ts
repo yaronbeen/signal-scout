@@ -10,12 +10,12 @@ test('invalid saved JSON shapes are safely dropped from every browser collection
   values.clear(); store('shortlist', [{ id: 'broken', contacts: [] }, sampleCreators[0]]); store('results', ['invalid', sampleCreators[1]], true); store('history', [null, { brief: 'broken' }]); store('jobs', [{ snapshot: 'sd_valid123', createdAt: Date.now() }], true);
   assert.equal(savedCreators().length, 1); assert.equal(currentResults().length, 1); assert.equal(recentSearches().length, 0); assert.equal(pendingJobs().length, 0);
 });
-test('ready, submitted and uncertain jobs restore without credentials; expired jobs do not', () => {
+test('ready, submitted and uncertain jobs restore without credentials and remain until explicitly discarded', () => {
   values.clear(); const config = { brief: 'AI', keywords: ['AI'], platforms: ['youtube'], depth: 5 };
   store('jobs', ['ready', 'uncertain', 'enrich'].map(stage => ({ platform: 'youtube', stage, snapshot: stage === 'enrich' ? 'sd_valid123' : '', createdAt: Date.now(), candidates: [sampleCreators[0]], config })), true);
   assert.equal(pendingJobs().length, 3);
   store('jobs', [{ platform: 'youtube', stage: 'enrich', snapshot: 'sd_old123', createdAt: 0, config }], true);
-  assert.equal(pendingJobs().length, 0);
+  assert.equal(pendingJobs().length, 1);
 });
 test('blocked storage returns failure instead of throwing', () => {
   const old = globalThis.localStorage;

@@ -29,11 +29,14 @@ export function useSearch() {
   const controller = useRef<AbortController | null>(null);
   const jobRef = useRef<Job[]>(jobs);
   const resultRef = useRef<Creator[]>(creators);
+  const searchQueue = useRef<Promise<void>>(Promise.resolve());
   function persist(name: string, value: unknown) {
-    if (!store(name, value, true))
+    const saved = store(name, value, true);
+    if (!saved)
       setStorageWarning(
         "Browser storage is unavailable. Export results and keep this tab open to preserve job references.",
       );
+    return saved;
   }
   function results(next: Creator[]) {
     resultRef.current = next;
@@ -46,10 +49,10 @@ export function useSearch() {
   function saveJobs(next: Job[]) {
     jobRef.current = next;
     setJobs(next);
-    persist("jobs", next);
+    return persist("jobs", next);
   }
   function updateJob(job: Job) {
-    saveJobs([
+    return saveJobs([
       ...jobRef.current.filter((j) => j.platform !== job.platform),
       job,
     ]);
@@ -77,7 +80,7 @@ export function useSearch() {
       message:
         "Submission outcome unknown. Check the Bright Data dashboard before starting this stage again.",
     };
-    updateJob(uncertain);
+    if (!updateJob(uncertain)) throw new Error('Cannot safely save the job reference in this browser. No paid collection was submitted. Free browser storage and try again.');
     try {
       const response = await api<{ snapshot: string }>("trigger", key, {
         platform: job.platform,
@@ -88,6 +91,7 @@ export function useSearch() {
           ? { urls: job.candidates!.map((c) => c.url) }
           : {}),
       });
+      if (typeof response.snapshot !== 'string' || !/^s[dn]_[a-z0-9]{5,80}$/i.test(response.snapshot)) throw new RequestError('Collection response had no valid snapshot ID. Check the Bright Data dashboard before retrying.', 0);
       const next: Job = {
         ...job,
         stage,
@@ -146,7 +150,15 @@ export function useSearch() {
         });
         let records: RawRecord[];
         if (!job.snapshot && ["instagram", "linkedin", "x"].includes(p)) {
-          const response = await api<{
+          const previous = searchQueue.current;
+          let release!: () => void;
+          searchQueue.current = new Promise<void>(resolve => { release = resolve; });
+          let response: { records: RawRecord[]; failures?: { keyword: string; error: string }[] };
+          try {
+            await previous; paused(signal);
+            const uncertain: Job = { ...job, stage: 'uncertain', uncertainStage: 'search', message: 'The search response is unresolved. Search requests may already have been billed. Review your Bright Data usage before explicitly starting this search again.' };
+            if (!updateJob(uncertain)) throw new Error('Cannot safely save search state. No paid search was submitted. Free browser storage and try again.');
+            response = await api<{
             records: RawRecord[];
             failures?: { keyword: string; error: string }[];
           }>("discover", key, {
@@ -154,6 +166,12 @@ export function useSearch() {
             keywords: config.keywords,
             depth: config.depth,
           });
+            if (!Array.isArray(response.records)) throw new RequestError('Unreadable search results. Review Bright Data usage before repeating this paid search.', 0);
+          } catch (e) {
+            // HTTP status alone cannot prove whether the provider billed a dispatched search.
+            // Preserve uncertainty for every failed search response; retries are explicit.
+            throw e;
+          } finally { release(); }
           records = response.records;
           termWarning = response.failures?.length
             ? ` · ${response.failures.length} search term(s) failed; successful terms preserved`
@@ -256,13 +274,7 @@ export function useSearch() {
     }
     if (resume && resultRef.current.some(c => c.sample)) results([]);
     const work = [...jobRef.current];
-    // Native collections proceed independently. SERP queries are sequenced to avoid exhausting the provider's browser pool.
-    const native = work.filter((j) =>
-      ["youtube", "tiktok"].includes(j.platform),
-    );
-    const serp = work.filter(
-      (j) => !["youtube", "tiktok"].includes(j.platform),
-    );
+    // Only SERP requests are sequenced; all snapshot enrichment/polling stays independent.
     const run = (j: (typeof work)[number]) =>
       pipeline(
         j.config,
@@ -271,15 +283,7 @@ export function useSearch() {
         abort.signal,
         "stage" in j ? (j as Job) : undefined,
       );
-    await Promise.allSettled([
-      ...native.map(run),
-      (async () => {
-        for (const j of serp) {
-          if (abort.signal.aborted) break;
-          await run(j);
-        }
-      })(),
-    ]);
+    await Promise.allSettled(work.map(run));
     controller.current = null;
     setRunning(false);
   }
@@ -293,13 +297,17 @@ export function useSearch() {
     const job = jobRef.current.find(
       (j) => j.platform === platform && j.stage === "uncertain",
     );
-    if (job && /^s[dn]_[a-z0-9]{5,80}$/i.test(snapshot))
+    if (job && job.uncertainStage !== 'search' && /^s[dn]_[a-z0-9]{5,80}$/i.test(snapshot))
       updateJob({
         ...job,
-        stage: job.uncertainStage || "enrich",
+        stage: job.uncertainStage === 'discover' ? 'discover' : "enrich",
         snapshot,
         message: undefined,
       });
+  }
+  function retrySearch(platform: Platform) {
+    const job = jobRef.current.find(j => j.platform === platform && j.stage === 'uncertain' && j.uncertainStage === 'search');
+    if (job) updateJob({ ...job, stage: 'queued', uncertainStage: undefined, message: undefined });
   }
   function showSample(data: Creator[]) {
     if (jobRef.current.length || controller.current) return;
@@ -320,6 +328,7 @@ export function useSearch() {
     pause,
     discardJobs,
     reconcileJob,
+    retrySearch,
     showSample,
     updateCreator,
   };

@@ -50,6 +50,9 @@ import {
 import { useSearch } from "./useSearch";
 
 type View = "discover" | "shortlist" | "history";
+function ProviderCredit() {
+  return <a className="provider-credit" href="https://brightdata.com" target="_blank" rel="noreferrer"><span>Powered by</span><strong className="brand-wordmark">Bright Data</strong><ArrowUpRight size={12} /></a>;
+}
 function PlatformMark({ platform }: { platform: Platform }) {
   return (
     <span className={`platform-mark ${platform}`} aria-hidden="true">
@@ -154,12 +157,17 @@ function Modal({
 function RadarArt() {
   return (
     <div className="radar-art" aria-hidden="true">
+      <div className="radar-grid" />
+      <div className="radar-sweep" />
       <div className="radar-orbit orbit-one" />
       <div className="radar-orbit orbit-two" />
       <div className="radar-orbit orbit-three" />
       <div className="radar-core">
         <Radio size={32} />
       </div>
+      <span className="radar-coordinate coordinate-top">DISCOVERY ENGINE / 01</span>
+      <span className="radar-coordinate coordinate-bottom">FIVE NETWORKS. ONE CLEAR VIEW.</span>
+      <div className="radar-live-card"><span className="radar-live-icon"><Users size={17} /></span><div><strong>Follow the signal</strong><span>Profiles · Public contacts · Evidence</span></div><span className="radar-status-dot" /></div>
       <div className="radar-person person-one">
         MC
         <span>
@@ -256,9 +264,10 @@ export default function App() {
       store("shortlist", next);
       return next;
     });
-    setDetails((current) =>
-      current && updates.has(current.id) ? updates.get(current.id)! : current,
-    );
+    setDetails(current => {
+      const fresh = current && updates.get(current.id);
+      return current && fresh ? { ...fresh, contacts: [...fresh.contacts, ...current.contacts.filter(c => !fresh.contacts.some(n => n.email === c.email))] } : current;
+    });
   }, [search.creators]);
   const resultsRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -281,8 +290,12 @@ export default function App() {
     setFilter("");
     setFilterPlatform("all");
     setEmailOnly(false);
+    setMinimum(0);
   }
   function toggleSaved(c: Creator) {
+    if (!shortlist.some(s => s.id === c.id) && shortlist.some(s => Boolean(s.sample) !== Boolean(c.sample))) {
+      setToast('Keep sample and live creators separate. Remove saved sample creators before saving live results, or export live results directly.'); return;
+    }
     const next = shortlist.some((s) => s.id === c.id)
       ? shortlist.filter((s) => s.id !== c.id)
       : [...shortlist, c];
@@ -510,9 +523,9 @@ export default function App() {
           <span className="workspace-avatar">Y</span>
           <div>
             <strong>Your workspace</strong>
-            <small>Personal research space</small>
+            <small>Saved in this browser</small>
           </div>
-          <span className="local-tag">LOCAL</span>
+          <span className="local-tag">BROWSER</span>
         </div>
         <div className="nav-caption">WORKSPACE</div>
         <nav aria-label="Main navigation">
@@ -567,11 +580,7 @@ export default function App() {
             <Terminal size={18} /> Run it locally <ArrowUpRight size={13} />
           </a>
           <div className="powered">
-            <span className="bright-logo">▰</span>
-            <div>
-              Powered by<strong>Bright Data</strong>
-            </div>
-            <span className="powered-dot" />
+            <ProviderCredit />
           </div>
         </div>
       </aside>
@@ -625,7 +634,7 @@ export default function App() {
               <section className="hero">
                 <div className="hero-copy">
                   <div className="eyebrow">
-                    <span /> CREATOR DISCOVERY, WITHOUT THE GUESSWORK
+                    <span /> FIVE-PLATFORM CREATOR RESEARCH
                   </div>
                   <h1>
                     Find your people.
@@ -633,11 +642,11 @@ export default function App() {
                     <span>Make some noise.</span>
                   </h1>
                   <p>
-                    The right creators are out there. Discover them across
-                    platforms,
-                    <br className="desktop-break" /> get the real data, and turn
-                    a good fit into your next partnership.
+                    Discover creators across five platforms with Bright Data.
+                    <br className="desktop-break" /> Review profile evidence, find public emails,
+                    and export your shortlist.
                   </p>
+                  <div className="provider-strip"><ProviderCredit /></div>
                   <div className="hero-meta">
                     <span>
                       <span className="tiny-stack">
@@ -720,7 +729,7 @@ export default function App() {
                 {companyMode && (
                   <div className="brand-terms">
                     <label htmlFor="terms">
-                      What does your brand do, or who do you want to reach?
+                        Which topics or audiences should we search for?
                     </label>
                     <input
                       id="terms"
@@ -731,8 +740,7 @@ export default function App() {
                       disabled={search.running}
                     />
                     <small>
-                      These editable terms guide the search. Separate up to 3
-                      topics with commas.
+                        Your company name labels this research. These terms guide discovery; separate up to 3 short topics with commas.
                     </small>
                   </div>
                 )}
@@ -800,13 +808,13 @@ export default function App() {
                         onChange={(e) => setDepth(Number(e.target.value))}
                       >
                         <option value={5}>
-                          Focused · 5 creators / platform
+                          Focused · up to 5 / platform
                         </option>
                         <option value={10}>
-                          Balanced · 10 creators / platform
+                          Balanced · up to 10 / platform
                         </option>
                         <option value={20}>
-                          Broader · 20 creators / platform
+                          Broader · up to 20 / platform
                         </option>
                       </select>
                       <ChevronDown size={14} />
@@ -837,17 +845,11 @@ export default function App() {
                   </button>
                 </div>
                 <p className="usage-summary">
-                  Collection bounds: up to {depth} creators per selected
-                  platform. Native discovery collects up to {depth} posts per
-                  topic; search discovery reads one results page per topic. Up
-                  to 3 topics. SERP API access is needed for Instagram,
-                  LinkedIn, and X.
+                  Collect up to {depth} creator profiles per platform. YouTube and TikTok review up to {depth} posts per topic; other platforms search one results page per topic. Search and profile collection use separate Bright Data credits. <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">View pricing <ArrowUpRight size={11} /></a>
                 </p>
                 {connected && !searchAvailable && (
                   <p className="form-error">
-                    YouTube and TikTok are ready. Enable a SERP API in Bright
-                    Data to discover Instagram, LinkedIn, and X; its name is
-                    detected automatically.
+                    YouTube and TikTok are ready. For Instagram, LinkedIn, and X, <a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">set up Bright Data’s search API</a>. Its name is detected automatically.
                   </p>
                 )}
                 {formError && (
@@ -865,9 +867,7 @@ export default function App() {
                       collection(s).
                     </strong>
                     <span>
-                      Resume existing jobs without repeating discovery. Ready
-                      profiles start their bounded enrichment request. Pausing
-                      does not cancel submitted Bright Data jobs.
+                      Continue saved work. Profiles ready for enrichment start a separate paid collection. Pausing or discarding references does not cancel Bright Data jobs; submitted jobs may still be billed.
                     </span>
                     {search.jobs
                       .filter((j) => j.stage === "uncertain")
@@ -878,18 +878,16 @@ export default function App() {
                             checking.
                           </strong>
                           <span>
-                            Find the submitted job in your Bright Data
-                            dashboard, then add its snapshot ID. An uncertain
-                            submission is never repeated automatically.
+                            {j.uncertainStage === 'search' ? 'The search may already have used credits. Review account usage before choosing to repeat it.' : 'Find the submitted job in your Bright Data dashboard, then add its snapshot ID. An uncertain submission is never repeated automatically.'}
                           </span>
                           <button
                             className="secondary-button"
                             onClick={() => {
-                              setReconcile(j.platform);
-                              setSnapshotDraft("");
+                              if (j.uncertainStage === 'search') { if (window.confirm('Repeat this paid search? The earlier request may already have used Bright Data credits.')) search.retrySearch(j.platform); }
+                              else { setReconcile(j.platform); setSnapshotDraft(""); }
                             }}
                           >
-                            Add existing job reference
+                            {j.uncertainStage === 'search' ? 'Allow a new paid search' : 'Add existing job reference'}
                           </button>
                         </div>
                       ))}
@@ -910,6 +908,7 @@ export default function App() {
                   <button
                     className="text-button"
                     onClick={() => {
+                      if (!window.confirm('Discard saved job references? Submitted Bright Data jobs keep running and may be billed. You will lose the app’s resume links.')) return;
                       search.discardJobs();
                       setFormError("");
                     }}
@@ -1048,7 +1047,7 @@ export default function App() {
                         ? "Your next partnerships."
                         : source.length || search.running
                           ? "Meet your next collaborators."
-                          : "A better way to find your fit."}
+                          : hasProgress ? "No creator profiles to show yet." : "A better way to find your fit."}
                     </h2>
                     <p>
                       {view === "shortlist" ? (
@@ -1062,7 +1061,7 @@ export default function App() {
                             : "Live Bright Data collection"}
                         </>
                       ) : (
-                        "From a topic to a shortlist. All the context you need, none of the busywork."
+                        hasProgress ? "Check the platform outcomes above. Broaden topics for no matches, or resolve the collection error and resume saved work." : "From a topic to a shortlist. All the context you need, none of the busywork."
                       )}
                     </p>
                   </div>
@@ -1236,8 +1235,7 @@ export default function App() {
                             </div>
                           </div>
                           <p className="creator-bio">
-                            {c.bio ||
-                              "Profile details are being collected. Discovery evidence is available."}
+                            {c.bio || (view === 'discover' && search.jobs.some(j => j.platform === c.platform) ? 'Profile collection is pending. Review the discovery evidence.' : 'No bio returned. Review the discovery evidence.')}
                           </p>
                           <div className="creator-signals">
                             {c.matchedTerms.length ? (
@@ -1277,7 +1275,7 @@ export default function App() {
                                 </>
                               ) : (
                                 <>
-                                  <strong>No public email</strong>
+                                  <strong>{view === 'discover' && search.jobs.some(j => j.platform === c.platform) ? 'Email collection pending' : 'No email found'}</strong>
                                   <span>
                                     {c.websites.length
                                       ? "Website available"
@@ -1351,7 +1349,7 @@ export default function App() {
                     )}
                     <div className="results-footnote">
                       <ShieldCheck size={13} />
-                      {sample
+                      {source.some(c => c.sample)
                         ? "Sample data is fictional and intended to demonstrate the workspace."
                         : "Publicly collected data. Email availability does not confirm deliverability. Topic signals are keyword matches, not audience guarantees."}
                     </div>
@@ -1376,7 +1374,7 @@ export default function App() {
                       </button>
                     </div>
                   ) : (
-                    <div className="how-grid">
+                    <div className="how-grid" hidden={hasProgress}>
                       <div>
                         <div className="how-icon">
                           <Compass size={25} />
@@ -1424,9 +1422,9 @@ export default function App() {
             </p>
           )}
           <footer className="page-footer">
-            <span>Made for marketers. Built on real signals.</span>
+            <span>Built by Yaron Been · Creator research with source evidence.</span>
             <div>
-              <span className="bright-logo">▰</span> Bright Data{" "}
+              <ProviderCredit />{" "}
               <span className="footer-separator">/</span>
               <button onClick={() => setHelp(true)}>
                 How it works <ArrowUpRight size={12} />
@@ -1518,7 +1516,9 @@ export default function App() {
               Searches take a few minutes. No credits are spent checking your
               connection.
             </small>
+            <div className="setup-links"><a href="https://brightdata.com" target="_blank" rel="noreferrer">Create an account <ExternalLink size={12} /></a><a href="https://docs.brightdata.com/scraping-automation/serp-api/quickstart" target="_blank" rel="noreferrer">Set up search for Instagram, LinkedIn & X <ExternalLink size={12} /></a><a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">Bright Data pricing <ExternalLink size={12} /></a></div>
           </div>
+          <p className="operator-note">Signal Scout is an open-source app built by Yaron Been. Bright Data provides the search and collection APIs. Your key passes through this app’s relay to Bright Data and is not saved.</p>
           {connected && (
             <button
               className="disconnect-button"
@@ -1556,7 +1556,7 @@ export default function App() {
               [
                 "03",
                 "Inspect the evidence",
-                "YouTube and TikTok discover relevant content. Google discovery finds public Instagram, LinkedIn, and X profiles. Each platform then enriches those profiles.",
+                "Bright Data finds YouTube and TikTok content by topic, searches Google for Instagram, LinkedIn, and X profiles, then collects profile details. Review the evidence to decide whether each creator fits your campaign.",
               ],
               [
                 "04",
@@ -1811,8 +1811,7 @@ export default function App() {
           <p className="modal-intro">
             Open your Bright Data dashboard and find the{" "}
             {platformNames[reconcile]} collection submitted by this search.
-            Paste its snapshot ID to resume it without another collection
-            charge.
+            Paste its snapshot ID to check the same job without submitting it again. If it is a discovery job, profile enrichment is a separate paid collection.
           </p>
           <form
             onSubmit={(e) => {

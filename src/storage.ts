@@ -101,7 +101,6 @@ export function pendingJobs(): Job[] {
             /^s[dn]_[a-z0-9]+$/i.test(j.snapshot)) &&
           isConfig(j.config) &&
           typeof j.createdAt === "number" &&
-          Date.now() - j.createdAt < 24 * 60 * 60_000 &&
           (j.candidates === undefined ||
             (Array.isArray(j.candidates) && j.candidates.every(isCreator))),
       )

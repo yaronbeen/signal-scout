@@ -63,7 +63,7 @@ Open **http://localhost:8787**. Works on Windows, macOS, and Linux. No Docker, P
 - Browser-saved shortlists and recent briefs.
 - CSV export with contacts, provenance, and collection dates.
 - Pause/resume for upstream snapshot jobs, without restarting collection.
-- Responsive interface with self-hosted fonts.
+- Responsive interface with Bright Data-inspired colors, an animated discovery radar, reduced-motion support, and self-hosted fonts.
 
 ### Data quality
 
@@ -90,6 +90,7 @@ Long-running scrapers return snapshot IDs. The browser polls short status reques
 - Current results and pending job references use session storage; reconnect your key after refresh to resume.
 - Browser-local research can include public contact information. Use CSV export to retain it elsewhere.
 - Pausing stops local polling. Already submitted Bright Data jobs may continue and be billed. Discarding a job reference does not cancel the upstream job.
+- A lost search response is never replayed automatically. Check Bright Data usage before explicitly authorizing another paid search. Unresolved job references remain until you discard or reconcile them.
 
 ## Deploy to Cloudflare
 

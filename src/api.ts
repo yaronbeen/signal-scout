@@ -4,12 +4,16 @@ export class RequestError extends Error { constructor(message: string, public st
 export async function api<T>(path: string, key: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`/api/${path}`, { method: body === undefined ? 'GET' : 'POST', headers: { Authorization: `Bearer ${key}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body), signal });
+    const deadline = AbortSignal.timeout(65_000);
+    response = await fetch(`/api/${path}`, { method: body === undefined ? 'GET' : 'POST', headers: { Authorization: `Bearer ${key}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body), signal: signal ? AbortSignal.any([signal, deadline]) : deadline });
   } catch (e) {
     if (signal?.aborted) throw e;
     throw new RequestError(body === undefined ? 'Connection lost. Resume your search to check existing jobs.' : 'The request outcome is unknown. Check your Bright Data dashboard before retrying a paid collection.', 0);
   }
-  const data = await response.json().catch(() => ({ error: 'Unexpected server response. Try resuming.' }));
+  let data;
+  try { data = await response.json(); }
+  catch { throw new RequestError('The response could not be read. A paid request may have been accepted; check your Bright Data dashboard before retrying.', response.ok ? 0 : response.status); }
+  if (!data || typeof data !== 'object') throw new RequestError('Unexpected response. Check your Bright Data dashboard before retrying a paid request.', 0);
   if (!response.ok) throw new RequestError(data.error || 'Request failed. Try again in a moment.', response.status);
   return data as T;
 }

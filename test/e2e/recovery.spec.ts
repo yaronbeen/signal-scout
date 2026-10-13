@@ -110,7 +110,7 @@ test('queued platforms survive pause and reload, and never mix sample/live resul
       const link = p === 'instagram' ? 'https://instagram.com/queuedmaker/' : p === 'linkedin' ? 'https://linkedin.com/in/queuedmaker/' : 'https://x.com/queuedmaker';
       return route.fulfill({ json: { records: [{ organic: [{ link, title: `${p} Maker`, description: 'AI tools' }] }] } });
     }
-    if (url.pathname.endsWith('/trigger')) return route.fulfill({ json: { snapshot: `sd_${route.request().postDataJSON().platform}123` } });
+    if (url.pathname.endsWith('/trigger')) return route.fulfill({ json: { snapshot: `sd_${route.request().postDataJSON().platform}12345` } });
     if (url.pathname.endsWith('/status')) return route.fulfill({ json: { status: 'ready' } });
     if (url.pathname.endsWith('/result')) {
       const id = url.searchParams.get('id'); const link = id?.includes('instagram') ? 'https://instagram.com/queuedmaker/' : id?.includes('linkedin') ? 'https://linkedin.com/in/queuedmaker/' : 'https://x.com/queuedmaker';

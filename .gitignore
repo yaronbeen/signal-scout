@@ -6,6 +6,7 @@ dist/
 .dev.vars*
 playwright-report/
 test-results/
+.playwright-mcp/
 docs/provider/
 docs/live-private/
 *.log
