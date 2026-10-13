@@ -57,6 +57,7 @@ export function canonicalProfile(platform: Platform, value: unknown): string {
       platform === "instagram" &&
       host === "instagram.com" &&
       parts.length === 1 &&
+      /^[a-zA-Z0-9_.]{1,30}$/.test(parts[0]) &&
       ![
         "p",
         "reel",
@@ -123,6 +124,46 @@ export function extractEmails(value: unknown): string[] {
     ),
   ];
 }
+export function canonicalPost(platform: Platform, value: unknown): string {
+  const url = safeUrl(value);
+  if (!url) return '';
+  const u = new URL(url);
+  const host = u.hostname.toLowerCase().replace(/^(www|m)\./, '');
+  const path = u.pathname;
+  if (platform === 'instagram' && host === 'instagram.com' && /^\/(p|reel)\/[A-Za-z0-9_-]+\/?$/.test(path))
+    return `https://www.instagram.com${path.replace(/\/$/, '')}/`;
+  if (platform === 'linkedin' && (host === 'linkedin.com' || /^[a-z]{2}\.linkedin\.com$/.test(host)) && (/^\/posts\/[A-Za-z0-9_%.-]+\/?$/.test(path) || /^\/feed\/update\/urn:li:activity:\d+\/?$/.test(path)))
+    return `https://www.linkedin.com${path.replace(/\/$/, '')}`;
+  if (platform === 'x' && ['x.com', 'twitter.com'].includes(host) && /^\/[A-Za-z0-9_]{1,15}\/status\/\d+\/?$/.test(path) && canonicalProfile('x', url))
+    return `https://x.com${path.replace(/\/$/, '')}`;
+  return '';
+}
+export function searchPostUrls(platform: Platform, records: RawRecord[], depth: number): string[] {
+  const topics = new Map<string, string[]>();
+  for (const r of records) {
+    const topic = text(r.keyword);
+    const queue = topics.get(topic) || [];
+    if (Array.isArray(r.organic)) for (const row of r.organic) {
+      const url = row && typeof row === 'object' ? canonicalPost(platform, pick(row as RawRecord, 'link', 'url')) : '';
+      if (url && !queue.includes(url)) queue.push(url);
+    }
+    topics.set(topic, queue);
+  }
+  const selected = new Set<string>();
+  // Round-robin the bounded pages so each topic gets a chance without adding paid inputs.
+  while (selected.size < depth) {
+    let remaining = false;
+    for (const queue of topics.values()) {
+      while (queue.length && selected.has(queue[0])) queue.shift();
+      if (!queue.length) continue;
+      remaining = true;
+      selected.add(queue.shift()!);
+      if (selected.size === depth) break;
+    }
+    if (!remaining) break;
+  }
+  return [...selected];
+}
 export function extractUrls(value: unknown): string[] {
   const input = typeof value === "string" ? value : JSON.stringify(value ?? "");
   return [
@@ -164,19 +205,51 @@ function addContacts(
       c.contacts.push({ email, sourceUrl, source });
 }
 export function matchingTerms(creator: Creator, keywords: string[]): string[] {
-  const haystack =
-    `${creator.name} ${creator.bio} ${creator.evidence.map((e) => e.text).join(" ")}`.toLowerCase();
-  const tokens = new Set(haystack.match(/[\p{L}\p{N}]+/gu) || []);
-  return keywords.filter((k) =>
-    k
-      .toLowerCase()
-      .split(/\s+/)
-      .some((w) =>
-        w.length > 2
-          ? haystack.includes(w)
-          : ["ai", "vr", "ar", "b2b", "ux", "ui"].includes(w) && tokens.has(w),
-      ),
-  );
+  return keywords.filter(k => [creator.name, creator.bio, ...creator.evidence.map(e => e.text)].some(value => matchesTopic(value, k)));
+}
+export function matchesTopic(value: string, term: string): boolean {
+  const words = term.toLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
+  const tokens = new Set(value.toLowerCase().match(/[\p{L}\p{N}]+/gu) || []);
+  return words.length > 0 && words.every(w => tokens.has(w));
+}
+export function contentSignals(c: Creator): Evidence[] {
+  return c.evidence.filter(e => e.kind === 'content' && c.matchedTerms.some(term => matchesTopic(e.text, term)));
+}
+export function relevanceScore(c: Creator): number {
+  const content = contentSignals(c);
+  const profile = c.evidence.some(e => e.kind === 'profile' && c.matchedTerms.some(t => matchesTopic(e.text, t)));
+  return Math.min(content.length, 20) * 100 + (profile ? 20 : 0) + c.matchedTerms.length;
+}
+export function compareRelevance(a: Creator, b: Creator): number {
+  const latest = (c: Creator) => Math.max(0, ...contentSignals(c).map(e => {
+    const date = Date.parse(e.publishedAt || '');
+    return Number.isFinite(date) && date <= Date.now() ? date : 0;
+  }));
+  return relevanceScore(b) - relevanceScore(a) || latest(b) - latest(a);
+}
+export function relevanceLabel(c: Creator): string {
+  const count = contentSignals(c).length;
+  if (count) return `${count} matching post${count === 1 ? '' : 's'}`;
+  if (c.evidence.some(e => e.kind === 'profile' && c.matchedTerms.some(t => matchesTopic(e.text, t)))) return 'Profile topic match';
+  return c.matchedTerms.length ? 'Search evidence only' : 'Review topic fit';
+}
+export function creatorsFromPosts(platform: Platform, records: RawRecord[], urls: string[], keywords: string[]): Creator[] {
+  const mapped: RawRecord[] = [];
+  for (const r of records) {
+    if (r.error || r.is_repost === true || (r.repost && typeof r.repost === 'object')) continue;
+    const post = canonicalPost(platform, r.url);
+    const input = r.input && typeof r.input === 'object' ? r.input as RawRecord : {};
+    const requested = canonicalPost(platform, r.input_url || input.url);
+    // Providers may resolve a feed/reel URL to its public permalink. Keep the
+    // returned source, but correlate it to a requested URL before attribution.
+    if (!post || (!urls.includes(post) && !urls.includes(requested))) continue;
+    const handle = pick(r, 'user_posted').replace(/^@/, '');
+    const author = canonicalProfile(platform, pick(r, 'profile_url', 'user_profile_url', 'use_url', 'author_url') || ((platform === 'x' || platform === 'instagram') && /^[a-zA-Z0-9_.]+$/.test(handle) ? `https://${platform === 'x' ? 'x.com' : 'www.instagram.com'}/${handle}` : ''));
+    const description = pick(r, 'post_text', 'description', 'caption');
+    if (!author || !keywords.some(k => matchesTopic(description, k))) continue;
+    mapped.push({...r, profile_url: author, name: pick(r, 'user_name', 'name', 'user_posted'), description, url: post});
+  }
+  return discoverCandidates(platform, mapped, keywords, Math.max(urls.length, 1));
 }
 export function discoverCandidates(
   platform: Platform,
@@ -225,6 +298,7 @@ export function discoverCandidates(
         if (!row || typeof row !== "object") continue;
         const r = row as RawRecord;
         const url = pick(r, "link", "url");
+        if (canonicalPost(platform, url)) continue;
         add(url, r, {
           url: safeUrl(url),
           text: `${pick(r, "title")} ${pick(r, "description", "snippet")}`.trim(),
@@ -240,10 +314,11 @@ export function discoverCandidates(
         url: safeUrl(record.url),
         text: `${pick(record, "title")} ${pick(record, "description", "profile_biography")}`.trim(),
         kind: "content",
+        ...(Number.isFinite(Date.parse(pick(record, 'date_posted'))) ? { publishedAt: pick(record, 'date_posted') } : {}),
       });
     }
   }
-  return [...map.values()].slice(0, depth);
+  return [...map.values()].sort(compareRelevance).slice(0, depth);
 }
 export function enrichCreators(
   platform: Platform,
@@ -361,7 +436,7 @@ export function mergeCreators(
   const map = new Map(current.map((c) => [c.id, c]));
   incoming.forEach((c) => {
     const old = map.get(c.id);
-    map.set(c.id, old ? { ...c, contacts: [...c.contacts, ...old.contacts.filter(contact => !c.contacts.some(n => n.email === contact.email))] } : c);
+    map.set(c.id, old ? { ...c, evidence: [...c.evidence, ...old.evidence.filter(e => !c.evidence.some(n => n.url === e.url && n.kind === e.kind))], contacts: [...c.contacts, ...old.contacts.filter(contact => !c.contacts.some(n => n.email === contact.email))] } : c);
   });
   return [...map.values()];
 }
@@ -384,6 +459,8 @@ export function toCsv(creators: Creator[]): string {
     "email_source",
     "website",
     "matching_terms",
+    "relevance",
+    "matching_posts",
     "evidence_url",
     "collected_at",
     "sample",
@@ -404,6 +481,8 @@ export function toCsv(creators: Creator[]): string {
     c.contacts.map((e) => e.sourceUrl).join("; "),
     c.websites.join("; "),
     c.matchedTerms.join("; "),
+    c.sample ? 'Illustrative topic match' : relevanceLabel(c),
+    c.sample ? '' : contentSignals(c).length,
     c.evidence.map((e) => e.url).join("; "),
     c.collectedAt,
     c.sample ? "yes" : "no",

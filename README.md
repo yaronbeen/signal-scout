@@ -83,7 +83,7 @@ Keep the terminal/server running while using the app. Connect your Bright Data k
 
 Public email discovery is not mailbox verification. Some creators publish no email. Keyword matches are research signals, not a prediction of audience fit or campaign performance. Follower counts are platform-specific; they are not unique reach across platforms. Review source evidence before choosing a partner.
 
-Search depth controls how many candidates per platform are enriched. Native content discovery is also capped per keyword. Search-engine discovery reads one results page per keyword, so requested depth is a ceiling, not a promise that that many profiles will be found.
+Search depth controls how many candidates per platform are enriched. YouTube/TikTok content discovery is capped per keyword. Instagram/LinkedIn/X read two search pages per keyword (profiles and content), collect up to the selected depth of discovered posts per platform, then enrich up to that depth of profiles. Search, post collection, and profile collection are separate paid stages. Depth is a ceiling, not a promise of that many results.
 
 ## How it works
 
@@ -91,16 +91,16 @@ The React frontend talks to a small same-origin Cloudflare Worker. The Worker va
 
 - **YouTube:** discover videos by keyword → deduplicate channels → collect channel profiles.
 - **TikTok:** discover posts by keyword → deduplicate creators → collect profiles.
-- **Instagram, LinkedIn, X:** Bright Data SERP API → canonical public profile URLs → platform-specific profile scrapers.
+- **Instagram, LinkedIn, X:** Bright Data SERP profile/content searches → dedicated post collectors identify matching authors → deduplicate and prioritize authors with matching posts → platform-specific profile scrapers.
 - **Optional contact scan:** explicitly fetch a linked public website through Bright Data Web Unlocker → extract visible public email.
 
 Long-running scrapers return snapshot IDs. The browser polls short status requests rather than holding open a server connection. Successful platforms keep their results even if another platform fails.
 
 ### Discovery and platform filters
 
-YouTube and TikTok use keyword content searches, then collect the channels/creators behind those results. Instagram, LinkedIn, and X use Google-indexed profile URLs and search snippets through the visitor's SERP zone, then enrich those profiles. X discovery uses Google's legacy `twitter.com` index and normalizes identities to `x.com`. There is no dedicated hashtag discovery mode or exhaustive scan of a creator's content.
+YouTube and TikTok use keyword content searches, then collect the channels/creators behind those results. Instagram, LinkedIn, and X search Google-indexed profiles and posts through the visitor's SERP zone without requiring “creator” in the query. Dedicated platform post collectors read discovered posts and identify the returned authors; LinkedIn company authors and explicit reposts are excluded from content-author discovery. X discovery uses Google's legacy `twitter.com` index and normalizes identities to `x.com`. Google indexing and bounded samples can miss relevant people. There is no dedicated hashtag discovery mode or exhaustive scan of a creator's content.
 
-Topic signals are words found in names, bios, and discovery evidence; a multiword term can match on one word. Google snippets can reflect indexed profile or content text and are not proof of an exact bio match.
+Every word of a topic must appear as a whole word in one name, bio, or evidence item; order need not be exact. Collected matching posts rank above profile-topic and search-only matches, with post dates used to break otherwise equal scores. Cards and CSV distinguish matching posts, profile matches, and search-only evidence. Source links and available post dates appear in creator details. Google snippets are not proof of a profile bio match, and post evidence is not an audience-quality score.
 
 Results share one shortlist/export workflow, with platform tabs and counts. Audience filters say subscribers for YouTube, followers for individual other platforms, and followers/subscribers for the combined list. They are reported counts, not equivalent unique reach across networks.
 

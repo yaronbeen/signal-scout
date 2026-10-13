@@ -30,7 +30,7 @@ import {
   X as Close,
 } from "lucide-react";
 import { api } from "./api";
-import { formatCount, safeUrl, toCsv } from "./data";
+import { compareRelevance, formatCount, relevanceLabel, safeUrl, toCsv } from "./data";
 import {
   isConfig,
   load,
@@ -510,7 +510,7 @@ export default function App() {
         ? (b.followers ?? -1) - (a.followers ?? -1)
         : sort === "email"
           ? Number(b.contacts.length > 0) - Number(a.contacts.length > 0)
-          : b.matchedTerms.length - a.matchedTerms.length,
+           : compareRelevance(a,b),
     );
   const emailCount = source.filter((c) => c.contacts.length).length;
   const usedPlatforms = new Set(source.map((c) => c.platform)).size;
@@ -825,7 +825,7 @@ export default function App() {
                   </button>
                 </div>
                 <p className="usage-summary">
-                  Collect up to {depth} creator profiles per platform. YouTube and TikTok review up to {depth} posts per topic; other platforms search one results page per topic. Search and profile collection use separate Bright Data credits. <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">View pricing <ArrowUpRight size={11} /></a>
+                  Up to {depth} profiles per platform. YouTube/TikTok: up to {depth} posts per topic. Instagram/LinkedIn/X: 2 search pages per topic (profiles + content), then up to {depth} discovered posts per platform to identify authors. Search, post collection and profile collection are separate paid stages. <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">View pricing <ArrowUpRight size={11} /></a>
                 </p>
                 {connected && !searchAvailable && (
                   <p className="form-error">
@@ -853,10 +853,11 @@ export default function App() {
                       .filter((j) => j.stage === "uncertain")
                       .map((j) => (
                         <div className="uncertain-job" key={j.platform}>
-                          <strong>
-                            {platformNames[j.platform]}: submission needs
-                            checking.
-                          </strong>
+                            <strong>
+                              {platformNames[j.platform]}: submission needs
+                              checking.
+                            </strong>
+                            {j.uncertainStage !== 'search' && <span>Stage: {j.uncertainStage === 'posts' ? 'post collection' : j.uncertainStage === 'enrich' ? 'profile enrichment' : 'content discovery'} · Submitted {new Date(j.createdAt).toLocaleString()}</span>}
                           <span>
                             {j.uncertainStage === 'search' ? 'The search may already have used credits. Review account usage before choosing to repeat it.' : 'Find the submitted job in your Bright Data dashboard, then add its snapshot ID. An uncertain submission is never repeated automatically.'}
                           </span>
@@ -1179,7 +1180,7 @@ export default function App() {
                             value={sort}
                             onChange={(e) => setSort(e.target.value)}
                           >
-                            <option value="relevance">Topic signals</option>
+                            <option value="relevance">Content relevance</option>
                             <option value="audience">{filterPlatform === 'all' ? 'Audience size' : `${audienceUnit[0].toUpperCase()}${audienceUnit.slice(1)}`}</option>
                             <option value="email">Email available</option>
                           </select>
@@ -1223,6 +1224,7 @@ export default function App() {
                             {c.bio || (view === 'discover' && search.jobs.some(j => j.platform === c.platform) ? 'Profile collection is pending. Review the discovery evidence.' : 'No bio returned. Review the discovery evidence.')}
                           </p>
                           <div className="creator-signals">
+                            <span className="relevance-badge">{c.sample ? 'Illustrative topic match' : relevanceLabel(c)}</span>
                             {c.matchedTerms.length ? (
                               <>
                                 <span className="signal-spark">
@@ -1538,7 +1540,7 @@ export default function App() {
               [
                 "03",
                 "Inspect the evidence",
-                "Bright Data finds YouTube and TikTok content by topic, searches Google for Instagram, LinkedIn, and X profiles, then collects profile details. Review the evidence to decide whether each creator fits your campaign.",
+                "Bright Data finds YouTube/TikTok content by topic. Instagram/LinkedIn/X search both profiles and posts, collect bounded post evidence to identify authors, then enrich profiles. Matching authored posts rank above profile or search-only evidence.",
               ],
               [
                 "04",
@@ -1570,11 +1572,11 @@ export default function App() {
             <ul className="discovery-methods">
               <li><strong>YouTube:</strong> keyword video search via Bright Data → deduplicate channels → collect channel profiles. Evidence comes from video titles/descriptions and profile text.</li>
               <li><strong>TikTok:</strong> keyword post search via Bright Data → deduplicate creators → collect profiles. Evidence comes from returned captions/descriptions and profile bios.</li>
-              <li><strong>Instagram:</strong> Google search for <code>site:instagram.com [topic] creator</code> via your SERP zone → keep profile URLs → collect profiles.</li>
-              <li><strong>LinkedIn:</strong> Google search for <code>site:linkedin.com/in [topic] creator</code> → keep personal profile URLs → collect profiles.</li>
-              <li><strong>X:</strong> Google search for <code>site:twitter.com [topic] creator</code> → normalize profiles to x.com → collect profiles, with up to 3 recent posts requested.</li>
+              <li><strong>Instagram:</strong> Google topic searches for profiles and posts/reels → collect discovered posts with the Instagram scraper → identify their authors → collect profiles.</li>
+              <li><strong>LinkedIn:</strong> Google topic searches for personal profiles and posts → collect posts with the LinkedIn scraper → identify personal-profile authors → collect profiles.</li>
+              <li><strong>X:</strong> Google topic searches on the legacy twitter.com index for profiles and status pages → collect posts with the X scraper → identify authors → collect x.com profiles.</li>
             </ul>
-            <p>There is no dedicated hashtag crawler. Hashtags may appear in returned text, but the app searches keywords and Google-indexed evidence. Topic badges mean a word from your term appeared in the name, bio, or evidence; they are not exact-phrase matches or audience-quality scores.</p>
+            <p>No “creator” keyword is required and there is no dedicated hashtag crawler. Topic matches require every word of the term in one name, bio, or evidence item (not necessarily as an exact phrase). Matching collected posts rank first. Search-only matches stay labeled; Google indexing and bounded samples can miss relevant people.</p>
           </div>
           <div className="connection-info">
             <strong>Using the live website</strong>
@@ -1770,9 +1772,10 @@ export default function App() {
                   {e.kind === "search"
                     ? "Search result"
                     : e.kind === "content"
-                      ? "Relevant content"
+                      ? "Collected content"
                       : "Public profile"}
                 </span>
+                {e.publishedAt && <span> · {new Date(e.publishedAt).toLocaleDateString()}</span>}
                 <p>{e.text.slice(0, 1000)}</p>
                 {!details.sample && (
                   <a href={safeUrl(e.url)} target="_blank" rel="noreferrer">
@@ -1814,7 +1817,7 @@ export default function App() {
           <p className="modal-intro">
             Open your Bright Data dashboard and find the{" "}
             {platformNames[reconcile]} collection submitted by this search.
-            Paste its snapshot ID to check the same job without submitting it again. If it is a discovery job, profile enrichment is a separate paid collection.
+            Match the stage shown in the recovery banner. Paste its snapshot ID to check the same job without submitting it again. After discovery or post collection, profile enrichment is a separate paid collection.
           </p>
           <form
             onSubmit={(e) => {

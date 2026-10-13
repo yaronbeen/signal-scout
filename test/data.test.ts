@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalProfile, discoverCandidates, enrichCreators, extractEmails, mergeCreators, number, toCsv, websiteContacts } from '../src/data';
+import { canonicalPost, canonicalProfile, creatorsFromPosts, discoverCandidates, enrichCreators, extractEmails, matchingTerms, mergeCreators, number, relevanceLabel, relevanceScore, searchPostUrls, toCsv, websiteContacts } from '../src/data';
 import { sampleCreators } from '../src/sample';
 
 test('canonical identities deduplicate profiles and reject non-profile and deceptive URLs', () => {
@@ -80,4 +80,49 @@ test('later enrichment preserves independently scanned website contacts and prov
   const enriched = { ...sampleCreators[0], name: 'New Name', contacts: [] };
   const result = mergeCreators([scanned], [enriched]);
   assert.equal(result[0].name, 'New Name'); assert.deepEqual(result[0].contacts, scanned.contacts);
+});
+test('post collection resolves actual matching authors, rejects mismatches and preserves post provenance', () => {
+  const urls=['https://www.instagram.com/p/post1/','https://www.instagram.com/reel/post2/'];
+  const records=[{url:urls[0],profile_url:'https://instagram.com/actualauthor/',user_posted:'actualauthor',description:'Meta ads experiments hello@actualauthor.io',date_posted:'2026-10-01'}, {url:urls[1],profile_url:'https://instagram.com/actualauthor/',description:'Scaling Meta ads'}, {url:'https://www.instagram.com/p/unrequested/',profile_url:'https://instagram.com/stranger/',description:'Meta ads'}, {url:urls[0],profile_url:'https://instagram.com/noise/',description:'Generic ads advice'}];
+  const creators=creatorsFromPosts('instagram',records,urls,['Meta ads']);
+  assert.equal(creators.length,1);assert.equal(creators[0].url,'https://www.instagram.com/actualauthor/');assert.equal(creators[0].evidence.length,2);assert.equal(creators[0].contacts[0].sourceUrl,urls[0]);assert.equal(relevanceLabel(creators[0]),'2 matching posts');
+  const enriched=enrichCreators('instagram',[{url:creators[0].url,biography:'Growth strategist'}],creators,['Meta ads'])[0];
+  assert.equal(relevanceLabel(enriched),'2 matching posts');assert.ok(relevanceScore(enriched)>relevanceScore({...sampleCreators[0],evidence:[],matchedTerms:['Meta ads']}));
+});
+test('multiword relevance needs whole words together in one evidence item', () => {
+  const c={...sampleCreators[0],name:'Amy',bio:'Marketing and metadata',evidence:[{url:'https://maker.io',text:'Generic ads advice',kind:'search' as const}]};
+  assert.deepEqual(matchingTerms(c,['Meta ads']),[]);
+  assert.deepEqual(matchingTerms({...c,evidence:[{...c.evidence[0],text:'How Meta changes your ads'}]},['Meta ads']),['Meta ads']);
+});
+test('post URL validation constrains platforms and bounds discovered URLs without guessing authors', () => {
+  assert.equal(canonicalPost('instagram','https://instagram.com.evil.test/p/a/'),'');
+  assert.equal(canonicalPost('linkedin','https://linkedin.com/in/person/'),'');
+  assert.equal(canonicalPost('x','https://twitter.com/maker/status/123?tracking=1'),'https://x.com/maker/status/123');
+  const records=[{organic:[{link:'https://instagram.com/p/a/'},{link:'https://instagram.com/p/b/'},{link:'https://instagram.com/p/a/'}]}];
+  assert.equal(searchPostUrls('instagram',records,1).length,1);
+  assert.equal(discoverCandidates('x',[{organic:[{link:'https://x.com/maker/status/123',description:'Meta ads'}]}],['Meta ads'],5).length,0);
+});
+test('LinkedIn and X content collectors use returned authors and exclude reposts', () => {
+  const linkedin='https://www.linkedin.com/posts/someone-activity-123';
+  const li=creatorsFromPosts('linkedin',[{url:linkedin,use_url:'https://linkedin.com/in/actualperson/',user_name:'Actual Person',post_text:'Meta ads insights'},{url:linkedin,use_url:'https://linkedin.com/company/agency/',post_text:'Meta ads'},{url:linkedin,use_url:'https://linkedin.com/in/reposter/',post_text:'Meta ads',repost:{url:linkedin}}],[linkedin],['Meta ads']);
+  assert.equal(li.length,1);assert.equal(li[0].handle,'actualperson');
+  const x='https://x.com/maker/status/123';
+  const twitter=creatorsFromPosts('x',[{url:'https://twitter.com/maker/status/123',user_posted:'@maker',description:'Meta ads insights'},{url:x,user_posted:'other',description:'Meta ads',is_repost:true}],[x],['Meta ads']);
+  assert.equal(twitter.length,1);assert.equal(twitter[0].url,'https://x.com/maker');
+});
+test('resolved post permalinks correlate to requested inputs and keep returned provenance', () => {
+  const input='https://www.linkedin.com/feed/update/urn:li:activity:123';
+  const resolved='https://www.linkedin.com/posts/maker-activity-123';
+  const c=creatorsFromPosts('linkedin',[{url:resolved,input:{url:input},use_url:'https://linkedin.com/in/maker/',post_text:'Meta ads'}],[input],['Meta ads']);
+  assert.equal(c.length,1);assert.equal(c[0].evidence[0].url,resolved);
+  assert.equal(creatorsFromPosts('linkedin',[{url:resolved,input:{url:'https://linkedin.com/posts/other'},use_url:'https://linkedin.com/in/maker/',post_text:'Meta ads'}],[input],['Meta ads']).length,0);
+});
+test('rank full bounded profile pages before limiting and share post inputs across topics', () => {
+  const records=[{keyword:'Meta ads',organic:[...Array.from({length:5},(_,i)=>({link:`https://instagram.com/noise${i}/`,description:'Generic ads advice'})),{link:'https://instagram.com/relevant/',description:'Meta ads consulting'}]}];
+  const profiles=discoverCandidates('instagram',records,['Meta ads'],5);
+  assert.equal(profiles.length,5);assert.equal(profiles[0].handle,'relevant');
+  const pages=['Meta ads','skincare','AI UGC'].map((keyword,t)=>({keyword,organic:Array.from({length:6},(_,i)=>({link:`https://instagram.com/p/t${t}p${i}/`}))}));
+  const urls=searchPostUrls('instagram',pages,5);
+  assert.equal(urls.length,5);assert.deepEqual(urls.slice(0,3),['https://www.instagram.com/p/t0p0/','https://www.instagram.com/p/t1p0/','https://www.instagram.com/p/t2p0/']);
+  assert.equal(searchPostUrls('instagram',[pages[0],{keyword:'empty',organic:[]}],5).length,5);
 });

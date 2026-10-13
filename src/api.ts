@@ -1,6 +1,7 @@
 import type { RawRecord } from './types';
 
 export class RequestError extends Error { constructor(message: string, public status: number) { super(message); } }
+export class CollectionFailedError extends Error {}
 export async function api<T>(path: string, key: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
@@ -30,7 +31,7 @@ export async function collect(snapshot: string, key: string, signal: AbortSignal
   while (Date.now() - started < 15 * 60_000) {
     const { status } = await api<{ status: string }>(`status?id=${snapshot}`, key, undefined, signal);
     onStatus(status);
-    if (['failed', 'canceled', 'cancelled'].includes(status)) throw new Error('Bright Data could not complete this collection. Try another keyword.');
+    if (['failed', 'canceled', 'cancelled'].includes(status)) throw new CollectionFailedError('Bright Data could not complete this collection. Try another keyword.');
     if (status === 'ready') {
       const result = await api<{ records?: RawRecord[]; pending?: boolean }>(`result?id=${snapshot}`, key, undefined, signal);
       if (Array.isArray(result.records)) return result.records;

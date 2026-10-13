@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { api, collect, RequestError } from "./api";
-import { discoverCandidates, enrichCreators, mergeCreators } from "./data";
+import { api, collect, CollectionFailedError, RequestError } from "./api";
+import { compareRelevance, creatorsFromPosts, discoverCandidates, enrichCreators, mergeCreators, searchPostUrls } from "./data";
 import { currentResults, pendingJobs, store } from "./storage";
 import {
   platforms,
@@ -68,7 +68,7 @@ export function useSearch() {
   }
   async function trigger(
     job: Job,
-    stage: "discover" | "enrich",
+    stage: "discover" | "posts" | "enrich",
     key: string,
   ): Promise<Job> {
     // Save uncertain state BEFORE a paid POST. A lost response must never auto-replay it.
@@ -77,6 +77,7 @@ export function useSearch() {
       stage: "uncertain",
       snapshot: "",
       uncertainStage: stage,
+      createdAt: Date.now(),
       message:
         "Submission outcome unknown. Check the Bright Data dashboard before starting this stage again.",
     };
@@ -87,9 +88,7 @@ export function useSearch() {
         stage,
         keywords: job.config.keywords,
         depth: job.config.depth,
-        ...(stage === "enrich"
-          ? { urls: job.candidates!.map((c) => c.url) }
-          : {}),
+        ...(stage === "enrich" ? { urls: job.candidates!.map(c => c.url) } : stage === 'posts' ? {urls: job.postUrls} : {}),
       });
       if (typeof response.snapshot !== 'string' || !/^s[dn]_[a-z0-9]{5,80}$/i.test(response.snapshot)) throw new RequestError('Collection response had no valid snapshot ID. Check the Bright Data dashboard before retrying.', 0);
       const next: Job = {
@@ -103,8 +102,8 @@ export function useSearch() {
     } catch (e) {
       // Only explicit 4xx rejections establish that no collection was accepted.
       if (e instanceof RequestError && e.status >= 400 && e.status < 500) {
-        if (stage === "enrich")
-          updateJob({ ...job, stage: "ready", snapshot: "" });
+        if (stage === "enrich" || stage === 'posts')
+          updateJob({ ...job, stage: stage === 'posts' ? 'posts-ready' : "ready", snapshot: "" });
         else
           saveJobs(jobRef.current.filter((j) => j.platform !== job.platform));
       }
@@ -121,7 +120,7 @@ export function useSearch() {
   ) {
     let candidates = existing?.candidates || [];
     const startedAt = Date.now();
-    let termWarning = "";
+    let termWarning = existing?.warning || "";
     let job: Job = existing || {
       platform: p,
       stage: "discover",
@@ -176,7 +175,7 @@ export function useSearch() {
           } finally { release(); }
           records = response.records;
           termWarning = response.failures?.length
-            ? ` · ${response.failures.length} search term(s) failed; successful terms preserved`
+            ? ` · ${response.failures.length} search page(s) failed; successful pages preserved`
             : "";
         } else {
           if (!job.snapshot) job = await trigger(job, "discover", key);
@@ -197,21 +196,51 @@ export function useSearch() {
           config.keywords,
           config.depth,
         );
-        if (!candidates.length && records.some((r) => r.error))
-          throw new Error(
-            "The scraper returned collection errors. Try another keyword or check scraper access.",
-          );
+        const postUrls = ['instagram', 'linkedin', 'x'].includes(p) ? searchPostUrls(p, records, config.depth) : [];
+        if (postUrls.length) {
+          job = {...job, stage: 'posts-ready', snapshot: '', candidates, postUrls, warning: termWarning};
+          updateJob(job);
+        } else {
+          if (!candidates.length && records.some((r) => r.error))
+            throw new Error("The scraper returned collection errors. Try another keyword or check scraper access.");
+          if (!candidates.length) {
+            patch(p, {phase: "done", message: `No profiles matched. Try a broader topic.${termWarning}`, count: 0});
+            saveJobs(jobRef.current.filter(j => j.platform !== p));
+            return;
+          }
+          append(candidates);
+          job = { ...job, stage: "ready", snapshot: "", candidates, warning:termWarning };
+          updateJob(job);
+        }
+      }
+      if (job.stage === 'posts-ready') {
+        paused(signal);
+        patch(p, {phase: 'discovering', message: `Reading up to ${job.postUrls!.length} posts to identify matching authors…`, count: candidates.length});
+        job = await trigger(job, 'posts', key);
+      }
+      if (job.stage === 'posts') {
+        paused(signal);
+        patch(p, {phase: 'discovering', snapshot: job.snapshot, message: 'Collecting post text and actual authors…', count: candidates.length});
+        let records: RawRecord[];
+        try {
+          records = await collect(job.snapshot, key, signal, () => patch(p, {message:'Bright Data is collecting content evidence…'}));
+        } catch (e) {
+          // Only a confirmed terminal status can advance past the snapshot.
+          // Network/timeouts remain resumable on the same paid collection.
+          if (!(e instanceof CollectionFailedError) || !candidates.length) throw e;
+          records = [];
+          termWarning += ' · Post collection failed; discovered profiles preserved';
+        }
+        const authored = creatorsFromPosts(p, records, job.postUrls || [], config.keywords);
+        candidates = mergeCreators(candidates, authored).sort(compareRelevance).slice(0, config.depth);
+        if (records.some(r => r.error)) termWarning += ' · Some posts could not be collected; profile candidates preserved';
         if (!candidates.length) {
-          patch(p, {
-            phase: "done",
-            message: "No profiles matched. Try a broader topic.",
-            count: 0,
-          });
-          saveJobs(jobRef.current.filter((j) => j.platform !== p));
+          patch(p, {phase:'done', message:'No matching authors or profile candidates found.', count:0});
+          saveJobs(jobRef.current.filter(j => j.platform !== p));
           return;
         }
         append(candidates);
-        job = { ...job, stage: "ready", snapshot: "", candidates };
+        job = {...job, stage:'ready', snapshot:'', candidates, warning:termWarning};
         updateJob(job);
       }
       if (job.stage === "ready") {
@@ -246,6 +275,7 @@ export function useSearch() {
       });
       saveJobs(jobRef.current.filter((j) => j.platform !== p));
     } catch (e) {
+      if (candidates.length) append(candidates);
       if (signal.aborted)
         patch(p, {
           phase: "idle",
@@ -303,7 +333,7 @@ export function useSearch() {
     if (job && job.uncertainStage !== 'search' && /^s[dn]_[a-z0-9]{5,80}$/i.test(snapshot))
       updateJob({
         ...job,
-        stage: job.uncertainStage === 'discover' ? 'discover' : "enrich",
+        stage: job.uncertainStage === 'discover' ? 'discover' : job.uncertainStage === 'posts' ? 'posts' : "enrich",
         snapshot,
         message: undefined,
       });

@@ -39,6 +39,14 @@ test('trigger sends official bounded object schema and forwards visitor key only
   }));
   assert.deepEqual(await response.json(), { snapshot: 'sd_valid123' });
 });
+test('post collectors constrain platform URLs, dataset and paid row limits', async () => {
+  for(const [platform,url,dataset] of [['instagram','https://instagram.com/p/abc','gd_lk5ns7kz21pck8jpis'],['linkedin','https://linkedin.com/posts/author-activity-123','gd_lyy3tktm25m4avu764'],['x','https://twitter.com/maker/status/123','gd_lwxkxvnf1cynvib9co']]) {
+    const response=await handleRequest(request('trigger',{platform,stage:'posts',urls:[url],depth:5}),env,mock((target,init)=>{
+      assert.ok(target.includes(`dataset_id=${dataset}`));const body=JSON.parse(String(init?.body));assert.equal(body.limit_per_input,1);assert.equal(body.input.length,1);return reply({snapshot_id:'sd_posts12345'});
+    }));assert.equal(response.status,200);
+  }
+  for(const urls of [['https://evil.test/p/abc'],Array(6).fill('https://instagram.com/p/abc')])assert.throws(()=>collectionPlan({platform:'instagram',stage:'posts',urls,depth:5}));
+});
 test('connection detects active zones and returns no account data or keys', async () => {
   const response = await handleRequest(request('connect', {}), env, mock(() => reply([{ name: 'disabled', type: 'serp', status: 'disabled' }, { name: 'search', type: 'serp', status: 'active' }, { name: 'unlocker', type: 'unblocker', status: 'active' }])));
   assert.deepEqual(await response.json(), { connected: true, searchAvailable: true, searchZones: ['search'], unlockerZone: 'unlocker' });
@@ -49,10 +57,10 @@ test('SERP discovery detects user zone, pins query to platform and preserves org
     calls++;
     if (url.endsWith('get_all_zones')) return reply([{ name: 'my_search', type: 'serp', status: 'active' }]);
     const body = JSON.parse(String(init?.body));
-    assert.equal(body.zone, 'my_search'); assert.ok(body.url.includes('brd_json=1')); assert.ok(decodeURIComponent(body.url).includes('site:linkedin.com/in'));
+    assert.equal(body.zone, 'my_search'); assert.ok(body.url.includes('brd_json=1')); assert.ok(decodeURIComponent(body.url).includes('site:linkedin.com')); assert.ok(!decodeURIComponent(body.url).includes(' creator'));
     return reply({ organic: [{ link: 'https://linkedin.com/in/maker/', title: 'Maker' }] });
   }));
-  assert.equal(response.status, 200); assert.equal(calls, 2); assert.equal((await response.json()).records[0].organic.length, 1);
+  assert.equal(response.status, 200); assert.equal(calls, 3); const data = await response.json(); assert.equal(data.records[0].organic.length, 1); assert.deepEqual(data.records.map((r: {searchKind:string})=>r.searchKind),['profile','content']);
 });
 test('missing SERP entitlement has an actionable partial-results error', async () => {
   const response = await handleRequest(request('discover', { platform: 'x', keywords: ['AI'], depth: 5 }), env, mock(() => reply([])));
@@ -68,7 +76,7 @@ test('selected search zone must belong to the visitor account and never falls ba
       return reply({organic:[]});
     }));
     assert.equal(response.status, selected === 'working' ? 200 : 409);
-    assert.equal(searches, selected === 'working' ? 1 : 0);
+    assert.equal(searches, selected === 'working' ? 2 : 0);
   }
 });
 test('origin error identifies the selected zone without exposing raw provider content', async () => {
@@ -130,5 +138,5 @@ test('one failed SERP term preserves paid successful keyword evidence', async ()
     const b = JSON.parse(String(init?.body));
     return b.url.includes('failing') ? reply({ status_code: 502, body: '' }) : reply({ organic: [{ link: 'https://x.com/maker', title: 'AI creator' }] });
   }));
-  assert.equal(response.status, 200); const data = await response.json(); assert.equal(data.records.length, 1); assert.equal(data.failures[0].keyword, 'failing');
+  assert.equal(response.status, 200); const data = await response.json(); assert.equal(data.records.length, 2); assert.equal(data.failures[0].keyword, 'failing');
 });

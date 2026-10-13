@@ -58,7 +58,8 @@ export function isCreator(value: unknown): value is Creator {
         e &&
         typeof e.url === "string" &&
         typeof e.text === "string" &&
-        ["profile", "content", "search", "website"].includes(e.kind),
+        ["profile", "content", "search", "website"].includes(e.kind) &&
+        (e.publishedAt === undefined || (typeof e.publishedAt === 'string' && Number.isFinite(Date.parse(e.publishedAt)))),
     )
   );
 }
@@ -95,12 +96,14 @@ export function pendingJobs(): Job[] {
         (j): j is Job =>
           j &&
           platforms.includes(j.platform) &&
-          ["queued", "discover", "ready", "enrich", "uncertain"].includes(j.stage) &&
+          ["queued", "discover", "posts-ready", "posts", "ready", "enrich", "uncertain"].includes(j.stage) &&
           typeof j.snapshot === "string" &&
-          (["queued", "ready", "uncertain"].includes(j.stage) ||
+          (["queued", "posts-ready", "ready", "uncertain"].includes(j.stage) ||
             /^s[dn]_[a-z0-9]+$/i.test(j.snapshot)) &&
           isConfig(j.config) &&
           typeof j.createdAt === "number" &&
+          (j.postUrls === undefined || (Array.isArray(j.postUrls) && j.postUrls.length <= j.config.depth && j.postUrls.every((u: unknown) => typeof u === 'string'))) &&
+          (!["posts-ready", "posts"].includes(j.stage) || (Array.isArray(j.postUrls) && j.postUrls.length > 0)) &&
           (j.candidates === undefined ||
             (Array.isArray(j.candidates) && j.candidates.every(isCreator))),
       )

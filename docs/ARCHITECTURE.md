@@ -40,7 +40,7 @@ A beautiful mockup is not a validated scraper. No public email coverage guarante
 UI and typed adapters are suitable for AI implementation; live schema validation and credentials remain evidence-driven. Ranking must be explainable literal/topic evidence rather than fictional AI confidence. No extra AI API key required. Do not delegate in this session absent explicit authorization.
 
 ## 10. Decision
-React/Vite, TypeScript, Cloudflare Worker, short trigger/status/result requests, browser-local storage. Native YouTube/TikTok content discovery and five profile scrapers were validated live. Instagram/LinkedIn/X discovery uses Bright Data SERP with auto-detected active zones. Website contact retrieval uses optional Web Unlocker.
+React/Vite, TypeScript, Cloudflare Worker, short trigger/status/result requests, browser-local storage. Native YouTube/TikTok content discovery and five profile scrapers were validated live. Instagram/LinkedIn/X discovery uses Bright Data SERP profile/content searches, bounded post collection to identify authors, and profile enrichment. One active zone is selected automatically; multiple zones require an explicit visitor choice. Website contact retrieval uses optional Web Unlocker.
 
 ## 11. Dependencies
 Bright Data is the live-data single point of failure. Cloudflare hosts the app; local mode removes that dependency. Node/npm are installation dependencies only. Exported CSV is the downstream artifact.
@@ -62,3 +62,5 @@ The Google scraper accepted requests but was too slow for interactive discovery.
 
 ## 17. Recovery semantics
 All selected platform descriptors are saved before execution. Credential-free current results, queued jobs, ready-for-enrichment candidates and submitted snapshot IDs use session storage. Paid trigger POSTs are preceded by an uncertain descriptor. Explicit 4xx rejections may resume the rejected stage; transport failures and 5xx outcomes require dashboard reconciliation and never auto-replay. Pausing prevents the next paid stage but does not cancel already submitted upstream jobs. Sample mode is unavailable during live recovery.
+
+Post collection adds `posts-ready` and `posts` descriptors containing bounded, credential-free post URLs. Uncertain post submissions can be reconciled to the existing snapshot. Resuming post collection preserves prior profile candidates and does not repeat SERP searches or submitted post triggers. Matching post text and returned author identity are required for content attribution; quoted/comment text is not used to qualify an author.

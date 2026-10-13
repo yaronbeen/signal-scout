@@ -338,3 +338,104 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Compact workspace: reduce empty space, retain readable type and tap targets. */
+:root { --muted: #40536d; }
+.hero { min-height: 270px; padding: 24px 0; gap: 24px; }
+.hero h1 { font-size: clamp(44px, 4vw, 60px); letter-spacing: -1.5px; }
+.hero h1 > span { background-image: linear-gradient(110deg, #1d51b5, #5951a1); }
+.hero-copy > p { font-size: 13px; line-height: 1.65; margin-top: 14px; }
+.provider-strip, .hero-meta { margin-top: 10px; }
+.hero-copy > .hero-setup-note { margin-top: 8px; }
+.radar-art { height: 230px; width: 290px; }
+.search-panel { padding: 0; }
+.search-panel-heading { padding: 18px 22px 6px; }
+.topic-field-label { margin: 8px 22px; }
+.search-input-wrap { margin-left: 22px; margin-right: 22px; min-height: 46px; }
+.suggestions { margin: 10px 22px 0; }
+.search-options { padding: 16px 22px; margin: 0; }
+.search-zone-option { margin: 0 22px 14px; gap: 6px; }
+.search-footer { padding: 14px 22px; margin: 0; }
+.usage-summary { margin: 10px 22px 0; padding-bottom: 14px; font-size: 11px; line-height: 1.65; }
+.results-section { margin-top: 26px; }
+.how-grid > div { padding: 18px 22px; }
+.stats-strip { margin-bottom: 18px; }
+.stats-strip > div { padding: 16px 20px; }
+.results-toolbar { margin-top: 18px; }
+.filter-row { padding: 12px 0; }
+.creator-grid { gap: 16px; }
+.card-top { padding: 14px 18px 8px; }
+.creator-identity { padding: 0 18px; gap: 10px; }
+.creator-bio { margin: 10px 18px 8px; padding: 0; height: 54px; min-height: 54px; line-height: 1.5; }
+.creator-signals { margin: 0 18px; padding: 0; gap: 5px; flex-wrap: wrap; height: auto; min-height: 25px; }
+.creator-signals > .relevance-badge { color: #174783; background: #e4edff; font-weight: 600; }
+.card-data { margin: 12px 18px 0; padding: 12px 0; }
+.card-evidence { margin: 0 18px 12px; width: calc(100% - 36px); }
+.card-bottom { padding: 10px 18px; }
+.creator-signals > span:not(.signal-spark), .card-bottom > span { font-size: 10px; }
+.modal { padding: 22px; }
+.modal-head { margin-bottom: 16px; }
+.modal-head h2 { font-size: 26px; }
+.connect-art { height: auto; min-height: 0; padding: 12px; flex-direction: row; gap: 12px; margin-bottom: 14px; }
+.connect-art span { font-size: 9px; letter-spacing: .8px; }
+.connect-art > svg { width: 22px; height: 22px; }
+.modal-intro { margin-bottom: 16px; line-height: 1.65; }
+.connection-info, .provider-setup, .setup-disclosure { padding: 14px; margin: 14px 0; }
+.provider-setup ol, .local-instructions ol, .discovery-methods { line-height: 1.6; }
+.provider-setup li + li, .local-instructions li + li { margin-top: 8px; }
+.tour-steps { gap: 18px; }
+.detail-section { margin-top: 20px; }
+.page-footer { margin-top: 28px; }
+.sidebar-guide p, .workspace small, .nav-caption, .sidebar-bottom > button,
+.sidebar-bottom > a, .breadcrumb, .byok-tag, .hero-copy > p, .hero-meta,
+.eyebrow, .results-heading p, .results-heading strong, .text-button, .sample-trigger,
+.suggestions > span, .platform-options > label, .depth-option > label, .usage-summary,
+.search-footer > span, .how-grid p, .platform-tabs button, .email-toggle,
+.filter-search, .filter-search input, .filter-selects label, .filter-selects select,
+.platform-label, .creator-identity > div > span, .creator-bio,
+.card-data > div:last-child strong, .card-data span:not(.small-dot), .stats-strip small,
+.stat-detail, .card-evidence > span:nth-child(2), .card-bottom > span, .results-footnote,
+.empty-state p, .history-list p, .history-list p > span, .standalone-view > p,
+.modal-intro, .detail-bio, .key-help, .connection-info p, .connection-info small,
+.tour-steps p, .local-instructions p, .local-instructions code, .detail-identity > div > span:last-child,
+.detail-stats span, .detail-section-title > span, .no-contact, .website-row, .scan-note,
+.evidence-row p, .evidence-row > span, .detail-section > small, .detail-bottom > span,
+.progress-heading div > span:last-child, .progress-item small, .progress-item p,
+.operator-note, .page-footer, .page-footer > div, .page-footer button { color: #40536d; }
+.search-input-wrap input, .modal-input { color: #172c48; }
+.search-input-wrap input::placeholder, .modal-input::placeholder, .filter-search input::placeholder { color: #52627a; opacity: 1; }
+.card-evidence, .evidence-row a, .get-key-link, .field-label { color: #2054a2; }
+.creator-signals .review-fit { color: #40536d !important; }
+.creator-signals > span:not(.signal-spark), .detail-terms span { color: #254d87; }
+.contact-row span, .contact-row a { color: #345969; }
+.progress-item.error p { color: #95301f; }
+@media (max-width: 900px) {
+  .hero h1 { font-size: 46px; }
+  .radar-art { width: 190px; height: 210px; }
+}
+@media (max-width: 700px) {
+  .hero { min-height: auto; padding: 22px 0 18px; }
+  .hero h1 { font-size: 46px; }
+  .radar-art { width: 100%; height: 110px; margin-top: 14px; }
+  .radar-live-card { bottom: 14px; }
+  .person-one { top: 28px; }
+  .person-two { top: 23px; }
+  .person-three { bottom: 2px; }
+  .search-panel-heading { padding: 16px 16px 4px; }
+  .topic-field-label { margin: 8px 16px; font-size: 11px; }
+  .search-input-wrap { margin-left: 16px; margin-right: 16px; }
+  .suggestions { margin: 10px 16px 0; flex-wrap: wrap; }
+  .suggestions button { font-size: 10px; min-height: 32px; }
+  .search-options, .search-footer { padding: 14px 16px; }
+  .search-zone-option { margin: 0 16px 14px; }
+  .usage-summary { margin: 10px 16px 0; }
+  .platform-choice, .platform-tabs button { font-size: 11px; min-height: 40px; }
+  .hero-meta { font-size: 10px; }
+  .creator-grid { gap: 14px; }
+  .modal { padding: 18px; }
+  .modal-head h2 { font-size: 25px; }
+  .connect-art span { font-size: 8px; }
+  .sample-trigger, .card-data > div:last-child strong, .card-data span:not(.small-dot),
+  .card-bottom > span, .card-bottom button, .card-evidence > span:nth-child(2) { font-size: 11px; }
+  .how-grid > div { padding: 16px; }
+}

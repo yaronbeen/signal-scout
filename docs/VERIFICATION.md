@@ -2,16 +2,27 @@
 
 ## Automated checks
 
-- `npm run check`: **32 unit/integration checks passed**, TypeScript passed, production build passed.
-- `npm run test:e2e`: **32 browser tests passed**, covering desktop (1440px), mobile (390px), topic-only search/legacy history, platform audience labels, explicit agent/human setup guidance, visitor-key clearing, required multi-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.
+- `npm run check`: **39 unit/integration checks passed**, TypeScript passed, production build passed.
+- `npm run test:e2e`: **44 browser tests passed**, covering desktop (1440px), mobile (390px), content-author discovery/ranking, post snapshot pause/refresh/resume, uncertain post reconciliation, terminal post failure fallback, transient polling recovery, topic-only search/legacy history, platform audience labels, explicit agent/human setup guidance, visitor-key clearing, required multi-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.
+- Supporting text contrast was measured against workspace backgrounds at **4.5:1 or greater** for the tested hero, bio, usage, card metadata, and results-note selectors. Compact desktop/mobile screenshots show no horizontal overflow.
 - Separate read-only reviewer audited orchestration, provenance, recovery, and sample isolation. Reported blockers were fixed and regression-tested; final targeted verdict: **SHIP**.
 - A subsequent four-perspective review covered branding, nontechnical onboarding, copywriting, and engineering; changes are documented in [REVIEW.md](REVIEW.md).
 
 Browser flows cover sample exploration, profile details, shortlist persistence, CSV download, filtering, validation, credential-free storage, platform failure isolation, pause-before-enrichment, refresh/resume, uncertain-submission reconciliation, explicit rejection recovery, eventual snapshot availability, queued-platform recovery, sample/live isolation, and removal during an in-flight website scan.
 
-## Real Bright Data verification
+## Content-first release scope
 
-Live discovery and profile enrichment completed for every platform using the developer's visitor-owned key. Native discovery snapshots were reused during adapter verification to avoid duplicate collection. The final verification script required at least one successfully correlated enriched profile per platform.
+Instagram, LinkedIn, and X now search profiles plus indexed posts without a required “creator” term. Dedicated post collectors resolve actual authors; all topic words must match the collected text. Returned post URLs can be correlated through their requested input when a provider resolves a permalink. Tests cover source-linked email, rejection of unrequested posts, LinkedIn company authors, explicit reposts, and preservation through profile enrichment. CSV now includes relevance labels and matching-post counts.
+
+Official post dataset schemas were rechecked on 2026-10-13: Instagram `gd_lk5ns7kz21pck8jpis`, LinkedIn `gd_lyy3tktm25m4avu764`, and X `gd_lwxkxvnf1cynvib9co`. Each supports collection by URL. Contract tests and browser tests use fixtures; no paid searches, post collection, or website scans were submitted for this release. Real-world relevance improvement has not been benchmarked.
+
+An independent read-only review identified terminal post failure blocking profile enrichment, early candidate truncation, and misleading uncertain-stage timestamps. Corrections preserve candidates on confirmed terminal post failure, keep transient failures on the existing snapshot, rank the full bounded profile set before limiting, distribute the unchanged post budget across topics, and refresh submission timestamps. Regression coverage includes both terminal and transient recovery. Interactive code review returned no requested changes.
+
+The independent targeted follow-up verdict was **SHIP**. Deployed Worker version: `6861c5ac-6f88-404b-9a4c-1041d20e462c`. Hosted desktop/mobile smoke checks passed for HTTP 200 health/assets, CSP, sample results, profile details, key dialog, current cost guidance, and no horizontal overflow or browser exceptions. Repository screenshots were refreshed from the hosted release without entering credentials or dispatching paid requests.
+
+## Earlier real Bright Data verification
+
+Before the content-first release, live discovery and profile enrichment completed for every platform using the developer's visitor-owned key. Native discovery snapshots were reused during adapter verification to avoid duplicate collection. The final verification script required at least one successfully correlated enriched profile per platform.
 
 - **YouTube:** 4 discovered profiles; 4 returned; 0 collection-error records; 2 source-linked public emails; audience counts on 4; websites on 3.
 - **Instagram:** 1 discovered profile; 1 returned; 0 collection-error records; no public email; audience count on 1; website on 1.

@@ -24,7 +24,7 @@ test('sample, profile, saved shortlist, export and browser persistence', async (
   await expect(page.locator('.creator-card')).toHaveCount(8);
   await expect(page.getByText('Fictional creators and illustrative metrics.')).toBeVisible();
   await page.getByRole('button', { name: 'Save Maya Chen', exact: true }).click();
-  await page.locator('.creator-card').first().getByRole('button', { name: 'View details' }).click();
+  await page.locator('.creator-card').filter({has:page.getByRole('heading',{name:'Maya Chen',exact:true})}).getByRole('button', { name: 'View details' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByText('hello@mayamakes.example')).toBeVisible();
   await expect(page.getByText('Illustrative profile · Not mailbox-verified')).toBeVisible();

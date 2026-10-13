@@ -75,6 +75,7 @@ test('visitor can select an account search zone without submitting or replaying 
 test('brand attribution, animation and setup guidance remain usable across widths', async ({page}) => {
   await page.goto('/');
   await expect(page.locator('.hero').getByRole('link', {name:'Powered by Bright Data'})).toBeVisible();
+  expect(await page.locator('.hero').evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(510);
   for (const width of [360, 700, 900, 1440]) {
     await page.setViewportSize({width, height:900});
     await expect(page.locator('.hero').getByRole('link', {name:'Powered by Bright Data'})).toBeVisible();
@@ -86,6 +87,23 @@ test('brand attribution, animation and setup guidance remain usable across width
   await page.getByText('New to Bright Data? Open the step-by-step setup checklist',{exact:true}).click();
   await expect(page.getByRole('dialog').getByRole('link',{name:/Set up search/})).toBeVisible();
   await expect(page.getByRole('dialog').getByRole('link',{name:'Check pricing'})).toBeVisible();
+});
+
+test('supporting text meets normal-text contrast on actual workspace backgrounds', async ({page}) => {
+  await page.goto('/');
+  await page.getByRole('button',{name:/Explore a sample/}).click();
+  const ratios=await page.locator('.creator-bio, .card-bottom > span, .usage-summary, .results-footnote, .hero-copy > p, .card-data span:not(.small-dot)').evaluateAll(els=>{
+    const rgb=(value:string)=>value.match(/[\d.]+/g)!.map(Number);
+    const luminance=(channels:number[])=>channels.slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((n,v,i)=>n+v*[.2126,.7152,.0722][i],0);
+    return els.map(el=>{
+      let parent:Element|null=el,bg=[255,255,255];
+      while(parent){const value=rgb(getComputedStyle(parent).backgroundColor);if(value.length===3||value[3]===1){bg=value;break;}parent=parent.parentElement;}
+      const foreground=luminance(rgb(getComputedStyle(el).color)),background=luminance(bg);
+      return (Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05);
+    });
+  });
+  expect(ratios.length).toBeGreaterThan(20);
+  for(const ratio of ratios)expect(ratio).toBeGreaterThanOrEqual(4.5);
 });
 
 for (const outcome of ['lost response', 'origin 403', 'origin 429']) test(`${outcome} never auto-repeats paid SERP discovery after reload`, async ({page}) => {

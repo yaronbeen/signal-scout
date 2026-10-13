@@ -1,4 +1,4 @@
-import { canonicalProfile, safeUrl, websiteContacts } from "../src/data";
+import { canonicalPost, canonicalProfile, safeUrl, websiteContacts } from "../src/data";
 import { platforms, type Platform } from "../src/types";
 
 interface Env {
@@ -14,13 +14,13 @@ export const datasets = {
     discovery: "gd_lk56epmy2i5g7lzu0k",
     profile: "gd_lk538t2k2p1k3oos71",
   },
-  instagram: { profile: "gd_l1vikfch901nx3by4" },
+  instagram: { profile: "gd_l1vikfch901nx3by4", posts: "gd_lk5ns7kz21pck8jpis" },
   tiktok: {
     discovery: "gd_lu702nij2f790tmv9h",
     profile: "gd_l1villgoiiidt09ci",
   },
-  linkedin: { profile: "gd_l1viktl72bvl7bjuj0" },
-  x: { profile: "gd_lwxmeb2u1cniijd7t4" },
+  linkedin: { profile: "gd_l1viktl72bvl7bjuj0", posts: "gd_lyy3tktm25m4avu764" },
+  x: { profile: "gd_lwxmeb2u1cniijd7t4", posts: "gd_lwxkxvnf1cynvib9co" },
   google: "gd_mfz5x93lmsjjjylob",
 };
 const security = {
@@ -209,6 +209,13 @@ function depth(value: unknown): number {
 export function collectionPlan(body: Record<string, unknown>) {
   const p = platform(body.platform);
   const d = depth(body.depth);
+  if (body.stage === 'posts') {
+    if (!['instagram', 'linkedin', 'x'].includes(p) || !Array.isArray(body.urls) || !body.urls.length || body.urls.length > d)
+      throw new ApiError('Provide a bounded list of supported post URLs.');
+    const urls = body.urls.map(u => canonicalPost(p, u));
+    if (urls.some(u => !u)) throw new ApiError('A post URL is invalid for this platform.');
+    return {dataset: datasets[p as 'instagram' | 'linkedin' | 'x'].posts, input: [...new Set(urls)].map(url => ({url})), limit: 1, discoverBy: ''};
+  }
   if (body.stage === "enrich") {
     if (
       !Array.isArray(body.urls) ||
@@ -388,14 +395,16 @@ export async function handleRequest(
           "Choose an active SERP API zone in your Bright Data dashboard to discover Instagram, LinkedIn, and X creators. Reconnect to refresh available zones. YouTube and TikTok can still run.",
           409,
         );
-      const site = {
-        instagram: "instagram.com",
-        linkedin: "linkedin.com/in",
-        x: "twitter.com",
-      }[p as "instagram" | "linkedin" | "x"];
+      const queries = terms.flatMap(term => {
+        const plans = {
+          instagram: [`site:instagram.com ${term} -inurl:/p/ -inurl:/reel/ -inurl:/explore/`, `site:instagram.com ${term} (inurl:/p/ OR inurl:/reel/)`],
+          linkedin: [`site:linkedin.com/in ${term}`, `site:linkedin.com ${term} (inurl:/posts/ OR inurl:/feed/update/)`],
+          x: [`site:twitter.com ${term} -inurl:/status/`, `site:twitter.com ${term} inurl:/status/`],
+        }[p as 'instagram' | 'linkedin' | 'x'];
+        return plans.map((query, i) => ({query, keyword: term, kind: i ? 'content' : 'profile'}));
+      });
       const settled = await Promise.allSettled(
-        terms.map(async (term) => {
-          const query = `site:${site} ${term} creator`;
+        queries.map(async ({query, keyword, kind}) => {
           const result = await upstream("/request", token, fetcher, {
             zone,
             url: `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&brd_json=1&hl=en&gl=us`,
@@ -410,7 +419,7 @@ export async function handleRequest(
               "The search API returned no readable organic results. Check your SERP API configuration.",
               502,
             );
-          return { ...(result as object), keyword: term };
+          return { ...(result as object), keyword, searchKind: kind };
         }),
       );
       const records = settled.flatMap((result) =>
@@ -420,7 +429,8 @@ export async function handleRequest(
         result.status === "rejected"
           ? [
               {
-                keyword: terms[i],
+                keyword: queries[i].keyword,
+                kind: queries[i].kind,
                 error:
                   result.reason instanceof ApiError
                     ? result.reason.message
