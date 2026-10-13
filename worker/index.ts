@@ -378,6 +378,8 @@ export async function handleRequest(
         : [];
       if (b.searchZone !== undefined && (typeof b.searchZone !== 'string' || b.searchZone.length > 128))
         throw new ApiError('Choose an active Bright Data search zone.');
+      if (!b.searchZone && available.length > 1)
+        throw new ApiError('Multiple active search zones found. Select your search zone in the app before starting Instagram, LinkedIn, or X discovery.', 409);
       const zone = b.searchZone
         ? available.find(z => z.name === b.searchZone)?.name
         : available[0]?.name;

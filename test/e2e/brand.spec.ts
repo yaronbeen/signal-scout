@@ -58,7 +58,11 @@ test('visitor can select an account search zone without submitting or replaying 
   await page.getByLabel('Bright Data API key').fill('fixture-key-only');
   await page.getByRole('dialog').getByRole('button',{name:'Connect Bright Data'}).click();
   const zone = page.getByLabel('Bright Data search zone · Instagram, LinkedIn & X');
-  await expect(zone).toHaveValue('first');
+  await expect(zone).toHaveValue('');
+  await page.getByLabel('Topic or keyword',{exact:true}).fill('ai ugc');
+  await page.getByRole('main').getByRole('button',{name:'Discover creators',exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText('Choose your Bright Data search zone');
+  expect(searches).toBe(0);
   await zone.selectOption('working');
   expect(searches).toBe(0);
   await page.getByLabel('Topic or keyword',{exact:true}).fill('ai ugc');

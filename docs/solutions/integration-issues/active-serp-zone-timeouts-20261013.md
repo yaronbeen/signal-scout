@@ -19,6 +19,7 @@ A bounded developer-account diagnostic using the Instagram `ai ugc` creator quer
 
 - `/api/connect` lists active SERP zone names.
 - The search form allows the visitor to choose a zone; start/resume passes it to discovery.
+- When an account has multiple active zones, connecting leaves the choice empty. The UI and relay both require an explicit selection before discovery; a single active zone can be selected automatically. No zone is hard-coded for other visitors.
 - The relay validates the chosen zone against that visitor's active account zones before dispatch. A missing/disabled/foreign zone never silently falls back.
 - Origin errors identify the selected zone and origin HTTP status without exposing raw provider bodies.
 - Changing a selection never dispatches a search. Failed paid requests retain uncertainty and require explicit retry authorization.

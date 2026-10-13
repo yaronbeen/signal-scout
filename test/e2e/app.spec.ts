@@ -1,5 +1,22 @@
 import { test, expect } from '@playwright/test';
 
+test('topic-only search restores legacy research keywords and labels platform audience filters', async ({page}) => {
+  await page.addInitScript(() => localStorage.setItem('signal-scout:v1:history',JSON.stringify([{brief:'Legacy company label',keywords:['ai ugc','marketing'],platforms:['youtube','x'],depth:5}])));
+  await page.goto('/');
+  await expect(page.getByRole('button',{name:'Company or brand',exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:/Explore a sample/}).click();
+  const tabs=page.getByRole('group',{name:'Filter by platform'});
+  await tabs.getByRole('button',{name:/YouTube/}).click();
+  await expect(page.locator('.creator-card')).toHaveCount(2);
+  await expect(page.getByLabel('Minimum audience').getByRole('option',{name:'10K+ subscribers',exact:true})).toHaveCount(1);
+  await tabs.getByRole('button',{name:/X/}).click();
+  await expect(page.getByLabel('Minimum audience').getByRole('option',{name:'10K+ followers',exact:true})).toHaveCount(1);
+  if(test.info().project.name==='mobile') await page.getByRole('button',{name:'Open navigation'}).click();
+  await page.getByRole('button',{name:'Recent searches',exact:true}).click();
+  await page.getByRole('button',{name:/Legacy company label/}).click();
+  await expect(page.getByLabel('Topic or keyword',{exact:true})).toHaveValue('ai ugc, marketing');
+});
+
 test('sample, profile, saved shortlist, export and browser persistence', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /Find your people/ })).toBeVisible();

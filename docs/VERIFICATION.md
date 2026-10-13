@@ -2,8 +2,8 @@
 
 ## Automated checks
 
-- `npm run check`: **31 unit/integration checks passed**, TypeScript passed, production build passed.
-- `npm run test:e2e`: **30 browser tests passed**, covering desktop (1440px), mobile (390px), explicit agent/human setup guidance, visitor-key clearing, account search-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.
+- `npm run check`: **32 unit/integration checks passed**, TypeScript passed, production build passed.
+- `npm run test:e2e`: **32 browser tests passed**, covering desktop (1440px), mobile (390px), topic-only search/legacy history, platform audience labels, explicit agent/human setup guidance, visitor-key clearing, required multi-zone selection, breakpoint widths 360/700/900/1440, and reduced motion.
 - Separate read-only reviewer audited orchestration, provenance, recovery, and sample isolation. Reported blockers were fixed and regression-tested; final targeted verdict: **SHIP**.
 - A subsequent four-perspective review covered branding, nontechnical onboarding, copywriting, and engineering; changes are documented in [REVIEW.md](REVIEW.md).
 

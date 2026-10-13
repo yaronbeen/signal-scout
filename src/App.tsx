@@ -223,8 +223,6 @@ export default function App() {
   const [keyError, setKeyError] = useState("");
   const [help, setHelp] = useState(false);
   const [brief, setBrief] = useState("");
-  const [terms, setTerms] = useState("");
-  const [companyMode, setCompanyMode] = useState(false);
   const [selected, setSelected] = useState<Platform[]>([...platforms]);
   const [depth, setDepth] = useState(5);
   const [formError, setFormError] = useState("");
@@ -343,7 +341,7 @@ export default function App() {
       setSearchAvailable(response.searchAvailable);
       const zones = response.searchZones || [];
       setSearchZones(zones);
-      setSearchZone(current => zones.includes(current) ? current : zones[0] || "");
+      setSearchZone(current => zones.includes(current) ? current : zones.length === 1 ? zones[0] : "");
       setKeyDraft("");
       setKeyModal(false);
       setToast(response.searchAvailable ? "Key connected. Choose your search zone before searching. Service access and credits are checked when collection runs." : "Key connected. Set up a search zone for Instagram, LinkedIn & X. YouTube/TikTok require Web Scraper API access and credits.");
@@ -354,12 +352,12 @@ export default function App() {
     }
   }
   function config(): SearchConfig | null {
-    const keywords = (companyMode ? terms : terms || brief)
+    const keywords = brief
       .split(/[,\n]/)
       .map((s) => s.trim())
       .filter(Boolean);
     if (!brief.trim()) {
-      setFormError("Add a topic or company to start your search.");
+      setFormError("Add a topic or keyword to start your search.");
       return null;
     }
     if (
@@ -374,6 +372,10 @@ export default function App() {
     }
     if (!selected.length) {
       setFormError("Choose at least one platform.");
+      return null;
+    }
+    if (connected && searchZones.length > 1 && !searchZone && selected.some(p => ['instagram', 'linkedin', 'x'].includes(p))) {
+      setFormError('Choose your Bright Data search zone for Instagram, LinkedIn & X before searching.');
       return null;
     }
     if (search.jobs.length) {
@@ -420,8 +422,6 @@ export default function App() {
     setSample(true);
     setLastBrief("AI tools & automation");
     setBrief("AI tools, automation");
-    setTerms("");
-    setCompanyMode(false);
     search.showSample(sampleCreators);
     go("discover");
     setTimeout(
@@ -494,6 +494,7 @@ export default function App() {
     }
   }
   const source = view === "shortlist" ? shortlist : search.creators;
+  const audienceUnit = filterPlatform === 'youtube' ? 'subscribers' : filterPlatform === 'all' ? 'followers / subscribers' : 'followers';
   const visible = source
     .filter(
       (c) =>
@@ -700,71 +701,22 @@ export default function App() {
                     <ArrowUpRight size={14} />
                   </button>
                 </div>
-                <div
-                  className="input-mode"
-                  role="group"
-                  aria-label="Search type"
-                >
-                  <button
-                    type="button"
-                    className={!companyMode ? "selected" : ""}
-                    onClick={() => {
-                      setCompanyMode(false);
-                      setTerms("");
-                    }}
-                  >
-                    Topic or keyword
-                  </button>
-                  <button
-                    type="button"
-                    className={companyMode ? "selected" : ""}
-                    onClick={() => {
-                      setCompanyMode(true);
-                      setTerms("");
-                    }}
-                  >
-                    Company or brand
-                  </button>
-                </div>
+                <label className="topic-field-label" htmlFor="topic">Topic or keyword · up to 3, separated by commas</label>
                 <label className="search-input-wrap">
                   <Search size={21} />
                   <input
-                    aria-label={
-                      companyMode ? "Company or brand" : "Topic or keyword"
-                    }
+                    id="topic"
+                    aria-label="Topic or keyword"
                     value={brief}
                     onChange={(e) => setBrief(e.target.value)}
                     maxLength={240}
-                    placeholder={
-                      companyMode
-                        ? "Your company or brand name"
-                        : "Try “AI tools”, “sustainable skincare”, or “B2B marketing”"
-                    }
+                    placeholder="Try “AI tools”, “sustainable skincare”, or “B2B marketing”"
                     disabled={search.running}
                   />
                   <span className="input-hint">
-                    {companyMode ? "BRAND" : "TOPIC"}
+                    TOPIC
                   </span>
                 </label>
-                {companyMode && (
-                  <div className="brand-terms">
-                    <label htmlFor="terms">
-                        Which topics or audiences should we search for?
-                    </label>
-                    <input
-                      id="terms"
-                      value={terms}
-                      onChange={(e) => setTerms(e.target.value)}
-                      placeholder="e.g. AI automation, SaaS founders"
-                      maxLength={300}
-                      disabled={search.running}
-                    />
-                    <small>
-                        Your company name labels this research. These terms guide discovery; separate up to 3 short topics with commas.
-                    </small>
-                  </div>
-                )}
-                {!companyMode && (
                   <div className="suggestions">
                     <span>A little inspiration:</span>
                     {[
@@ -784,14 +736,12 @@ export default function App() {
                               "SaaS founders, startup tools",
                             ][i],
                           );
-                          setTerms("");
                         }}
                       >
                         {s} <ArrowUpRight size={11} />
                       </button>
                     ))}
                   </div>
-                )}
                 <div className="search-options">
                   <div className="platform-options">
                     <label>Search across</label>
@@ -845,9 +795,10 @@ export default function App() {
                   <div className="search-zone-option">
                     <label htmlFor="search-zone">Bright Data search zone · Instagram, LinkedIn & X</label>
                     <select id="search-zone" value={searchZone} disabled={search.running} onChange={e => setSearchZone(e.target.value)}>
+                      <option value="" disabled>Choose your search zone</option>
                       {searchZones.map(zone => <option key={zone} value={zone}>{zone}</option>)}
                     </select>
-                    <small>If search fails, check this zone’s settings. Selecting another zone does not repeat any paid request.</small>
+                    <small>{searchZones.length > 1 ? 'You have multiple zones. Choose the one configured for working Google searches; the app does not test them with paid requests. ' : ''}If search fails, check this zone’s settings. Selecting another zone does not repeat any paid request.</small>
                   </div>
                 )}
                 <div className="search-footer">
@@ -927,6 +878,10 @@ export default function App() {
                     onClick={() => {
                       if (!connected) setKeyModal(true);
                       else {
+                        if (!searchZone && searchZones.length > 1 && search.jobs.some(j => j.stage === 'queued' && ['instagram', 'linkedin', 'x'].includes(j.platform))) {
+                          setFormError('Choose your Bright Data search zone before resuming discovery.');
+                          return;
+                        }
                         setSample(false);
                         search.start(search.jobs[0].config, key, true, searchZone);
                       }
@@ -1021,11 +976,9 @@ export default function App() {
                     <button
                       key={i}
                       onClick={() => {
-                        setBrief(h.brief);
-                        setTerms(h.keywords.join(", "));
+                        setBrief(h.keywords.join(", "));
                         setSelected(h.platforms);
                         setDepth(h.depth);
-                        setCompanyMode(true);
                         go("discover");
                       }}
                     >
@@ -1167,6 +1120,7 @@ export default function App() {
                       >
                         <button
                           className={filterPlatform === "all" ? "active" : ""}
+                          aria-pressed={filterPlatform === 'all'}
                           onClick={() => setFilterPlatform("all")}
                         >
                           All creators <span>{source.length}</span>
@@ -1175,10 +1129,12 @@ export default function App() {
                           <button
                             key={p}
                             className={filterPlatform === p ? "active" : ""}
+                            aria-pressed={filterPlatform === p}
                             onClick={() => setFilterPlatform(p)}
                           >
                             <PlatformMark platform={p} />
                             {platformNames[p]}
+                            <span>{source.filter(c => c.platform === p).length}</span>
                           </button>
                         ))}
                       </div>
@@ -1211,9 +1167,9 @@ export default function App() {
                             onChange={(e) => setMinimum(Number(e.target.value))}
                           >
                             <option value={0}>Any audience size</option>
-                            <option value={1000}>1K+ followers</option>
-                            <option value={10000}>10K+ followers</option>
-                            <option value={100000}>100K+ followers</option>
+                            <option value={1000}>1K+ {audienceUnit}</option>
+                            <option value={10000}>10K+ {audienceUnit}</option>
+                            <option value={100000}>100K+ {audienceUnit}</option>
                           </select>
                         </label>
                         <label>
@@ -1224,7 +1180,7 @@ export default function App() {
                             onChange={(e) => setSort(e.target.value)}
                           >
                             <option value="relevance">Topic signals</option>
-                            <option value="audience">Audience size</option>
+                            <option value="audience">{filterPlatform === 'all' ? 'Audience size' : `${audienceUnit[0].toUpperCase()}${audienceUnit.slice(1)}`}</option>
                             <option value="email">Email available</option>
                           </select>
                         </label>
@@ -1411,7 +1367,7 @@ export default function App() {
                         </div>
                         <h3>Start with a signal</h3>
                         <p>
-                          A niche, a keyword, or your brand.
+                          A niche, a topic, or a keyword.
                           <br />
                           Tell us what a good fit looks like.
                         </p>
@@ -1577,7 +1533,7 @@ export default function App() {
               [
                 "02",
                 "Describe your ideal creator",
-                "Use up to three specific topics. For a company search, add the niche or audience you want to reach. Start with focused depth.",
+                "Enter up to three specific topics or keywords separated by commas. Start with focused depth.",
               ],
               [
                 "03",
@@ -1609,6 +1565,17 @@ export default function App() {
             </p>
           </div>
           <ProviderSetup />
+          <div className="connection-info">
+            <strong>What each platform searches</strong>
+            <ul className="discovery-methods">
+              <li><strong>YouTube:</strong> keyword video search via Bright Data → deduplicate channels → collect channel profiles. Evidence comes from video titles/descriptions and profile text.</li>
+              <li><strong>TikTok:</strong> keyword post search via Bright Data → deduplicate creators → collect profiles. Evidence comes from returned captions/descriptions and profile bios.</li>
+              <li><strong>Instagram:</strong> Google search for <code>site:instagram.com [topic] creator</code> via your SERP zone → keep profile URLs → collect profiles.</li>
+              <li><strong>LinkedIn:</strong> Google search for <code>site:linkedin.com/in [topic] creator</code> → keep personal profile URLs → collect profiles.</li>
+              <li><strong>X:</strong> Google search for <code>site:twitter.com [topic] creator</code> → normalize profiles to x.com → collect profiles, with up to 3 recent posts requested.</li>
+            </ul>
+            <p>There is no dedicated hashtag crawler. Hashtags may appear in returned text, but the app searches keywords and Google-indexed evidence. Topic badges mean a word from your term appeared in the name, bio, or evidence; they are not exact-phrase matches or audience-quality scores.</p>
+          </div>
           <div className="connection-info">
             <strong>Using the live website</strong>
             <p>No installation is needed. Connect your own key, choose your search zone, and search. No owner key is provided. After a refresh, reconnect your key and use Resume search to check existing collections. Do not repeat an unresolved paid search until you check your Bright Data usage.</p>

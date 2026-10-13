@@ -12,7 +12,7 @@ Discover creators across **YouTube, Instagram, TikTok, LinkedIn, and X**, collec
 
 1. Open the app and click **Connect Bright Data**.
 2. Paste your own Bright Data API key.
-3. Enter a topic, or enter your company and the topics you want to reach.
+3. Enter 1–3 topics or keywords separated by commas.
 4. Choose platforms and click **Discover creators**.
 5. Inspect the evidence, save the good fits, and export a CSV.
 
@@ -23,7 +23,7 @@ You can explore the interface without a key using **Explore a sample**. Sample c
 ### What your Bright Data account needs
 
 - An API key with **Web Scraper API** access and available credits.
-- An active, working **SERP API zone** for Instagram, LinkedIn, and X discovery. Create one at [Bright Data → Create an API](https://brightdata.com/cp/web_access/new). The app lists your active search zones; select the one you want to use. Active status does not guarantee successful search-engine access.
+- An active, working **SERP API zone** for Instagram, LinkedIn, and X discovery. Create one at [Bright Data → Create an API](https://brightdata.com/cp/web_access/new). The app lists your active search zones. With multiple zones, you must choose one explicitly; it never silently selects the first. Active status does not guarantee successful search-engine access.
 - Optional: an active **Web Unlocker API** to scan a creator's linked website for public email. This is a separate, user-triggered request.
 
 [Find your API key](https://brightdata.com/cp/setting/users) · [SERP setup guide](https://docs.brightdata.com/scraping-automation/serp-api/quickstart)
@@ -95,6 +95,14 @@ The React frontend talks to a small same-origin Cloudflare Worker. The Worker va
 - **Optional contact scan:** explicitly fetch a linked public website through Bright Data Web Unlocker → extract visible public email.
 
 Long-running scrapers return snapshot IDs. The browser polls short status requests rather than holding open a server connection. Successful platforms keep their results even if another platform fails.
+
+### Discovery and platform filters
+
+YouTube and TikTok use keyword content searches, then collect the channels/creators behind those results. Instagram, LinkedIn, and X use Google-indexed profile URLs and search snippets through the visitor's SERP zone, then enrich those profiles. X discovery uses Google's legacy `twitter.com` index and normalizes identities to `x.com`. There is no dedicated hashtag discovery mode or exhaustive scan of a creator's content.
+
+Topic signals are words found in names, bios, and discovery evidence; a multiword term can match on one word. Google snippets can reflect indexed profile or content text and are not proof of an exact bio match.
+
+Results share one shortlist/export workflow, with platform tabs and counts. Audience filters say subscribers for YouTube, followers for individual other platforms, and followers/subscribers for the combined list. They are reported counts, not equivalent unique reach across networks.
 
 ### Key and storage behavior
 

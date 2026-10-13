@@ -80,6 +80,16 @@ test('origin error identifies the selected zone without exposing raw provider co
   assert.ok(!body.includes(token));
   assert.ok(!body.includes('SECRET_TOKEN'));
 });
+test('multiple active search zones require an explicit choice before paid dispatch', async () => {
+  let searches = 0;
+  const response = await handleRequest(request('discover', {platform:'instagram',keywords:['ai ugc'],depth:5}), env, mock(url => {
+    if (url.endsWith('get_all_zones')) return reply([{name:'first',type:'serp',status:'active'}, {name:'second',type:'serp',status:'active'}]);
+    searches++; return reply({organic:[]});
+  }));
+  assert.equal(response.status,409);
+  assert.match((await response.json()).error,/Multiple active search zones/);
+  assert.equal(searches,0);
+});
 test('status rejects arbitrary paths and result treats eventual-consistency response as pending', async () => {
   const invalid = await handleRequest(request('status?id=../../secrets'), env, mock(() => { throw new Error('must not fetch'); }));
   assert.equal(invalid.status, 400);
