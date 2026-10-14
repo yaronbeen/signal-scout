@@ -13,6 +13,7 @@ try {
   for (const [device, viewport] of [['desktop', { width: 1440, height: 1000 }], ['mobile', { width: 390, height: 844 }]]) {
     const context = await browser.newContext({ viewport, acceptDownloads: true });
     const page = await context.newPage();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     const errors = [];
     const blocked = [];
     const externalFonts = [];
@@ -36,7 +37,8 @@ try {
     await page.getByLabel('Search depth', { exact: true }).selectOption('100');
     await page.locator('.usage-disclosure summary').click();
     assert((await page.locator('.usage-summary').innerText()).includes('Up to 100 profiles per platform'), 'Hosted collection disclosure must reflect selected depth');
-    await page.screenshot({ path: `${evidenceDir}hosted-${device}-depth-100.png`, fullPage: true });
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: `${evidenceDir}hosted-${device}-depth-100.png`, fullPage: true, animations: 'disabled' });
     await page.getByRole('button', { name: /Explore (?:a )?sample/ }).first().click();
     await page.locator('.creator-card').first().waitFor();
     assert(await page.locator('.creator-card').count() === 8, 'Sample must contain eight labeled creators');
