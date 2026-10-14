@@ -27,4 +27,4 @@ export interface Creator {
 export interface SearchConfig { brief: string; keywords: string[]; platforms: Platform[]; depth: number }
 export interface PlatformProgress { phase: 'idle' | 'discovering' | 'enriching' | 'done' | 'error'; message: string; count: number; startedAt?: number; snapshot?: string }
 export type Progress = Record<Platform, PlatformProgress>;
-export interface Job { platform: Platform; stage: 'queued' | 'discover' | 'posts-ready' | 'posts' | 'ready' | 'enrich' | 'uncertain'; snapshot: string; createdAt: number; config: SearchConfig; candidates?: Creator[]; postUrls?: string[]; warning?: string; uncertainStage?: 'discover' | 'posts' | 'enrich' | 'search'; message?: string }
+export interface Job { platform: Platform; stage: 'queued' | 'discover' | 'posts-ready' | 'posts' | 'ready' | 'enrich' | 'uncertain'; snapshot: string; createdAt: number; config: SearchConfig; candidates?: Creator[]; postUrls?: string[]; warning?: string; searchOffset?: number; searchRecords?: RawRecord[]; searchFailures?: number; uncertainStage?: 'discover' | 'posts' | 'enrich' | 'search'; message?: string }

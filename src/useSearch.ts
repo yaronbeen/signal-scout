@@ -166,29 +166,45 @@ export function useSearch() {
           const previous = searchQueue.current;
           let release!: () => void;
           searchQueue.current = new Promise<void>(resolve => { release = resolve; });
-          let response: { records: RawRecord[]; failures?: { keyword: string; error: string }[] };
+          const collected = [...(job.searchRecords || [])];
+          let failures = job.searchFailures || 0;
           try {
             await previous; paused(signal);
-            const uncertain: Job = { ...job, stage: 'uncertain', uncertainStage: 'search', message: 'The search response is unresolved. Search requests may already have been billed. Review your Bright Data usage before explicitly starting this search again.' };
-            if (!updateJob(uncertain)) throw new Error('Cannot safely save search state. No paid search was submitted. Free browser storage and try again.');
-            response = await api<{
-            records: RawRecord[];
-            failures?: { keyword: string; error: string }[];
-          }>("discover", key, {
-            platform: p,
-            keywords: config.keywords,
-            depth: config.depth,
-            ...(searchZone ? { searchZone } : {}),
-          });
-            if (!Array.isArray(response.records)) throw new RequestError('Unreadable search results. Review Bright Data usage before repeating this paid search.', 0);
+            let offset = job.searchOffset || 0;
+            while (true) {
+              paused(signal);
+              const uncertain: Job = { ...job, stage: 'uncertain', uncertainStage: 'search', message: 'The search response is unresolved. Search requests may already have been billed. Review your Bright Data usage before explicitly starting this search again.' };
+              if (!updateJob(uncertain)) throw new Error('Cannot safely save search state. No paid search was submitted. Free browser storage and try again.');
+              const batch = await api<{
+                records: RawRecord[];
+                failures?: { keyword: string; error: string }[];
+                nextOffset?: number | null;
+              }>("discover", key, {
+                platform: p,
+                keywords: config.keywords,
+                depth: config.depth,
+                offset,
+                ...(searchZone ? { searchZone } : {}),
+              });
+              if (!Array.isArray(batch.records) || (batch.nextOffset != null && (batch.nextOffset !== offset + 6 || batch.nextOffset >= 48))) throw new RequestError('Unreadable search results. Review Bright Data usage before repeating this paid search.', 0);
+              collected.push(...batch.records);
+              failures += batch.failures?.length || 0;
+              candidates = discoverCandidates(p, collected, config.keywords, config.depth);
+              if (candidates.length) publishCandidates(p, candidates);
+              if (batch.nextOffset == null) break;
+              offset = batch.nextOffset;
+              job = {...job, candidates, searchOffset:offset, searchRecords:collected.slice(), searchFailures:failures};
+              if (!updateJob(job)) throw new Error('Cannot save collected search pages. Keep this tab open and free browser storage before resuming.');
+              patch(p, {message:`Read ${collected.length} search pages; finding more creators…`, count:candidates.length});
+            }
           } catch (e) {
             // HTTP status alone cannot prove whether the provider billed a dispatched search.
             // Preserve uncertainty for every failed search response; retries are explicit.
             throw e;
           } finally { release(); }
-          records = response.records;
-          termWarning = response.failures?.length
-            ? ` · ${response.failures.length} search page(s) failed; successful pages preserved`
+          records = collected;
+          termWarning = failures
+            ? ` · ${failures} search page(s) failed; successful pages preserved`
             : "";
         } else {
           if (!job.snapshot) job = await trigger(job, "discover", key);

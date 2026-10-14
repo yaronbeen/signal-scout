@@ -20,7 +20,7 @@ The local server and hosted deployment use the same Worker and built assets. No 
 - **Slow profile scraper:** pause/resume the existing snapshot; the Bright Data dashboard shows its status.
 - **Trigger timeout:** check the Bright Data dashboard before starting again. The job may already have been submitted.
 - **Missing email:** the creator may not publish one. Inspect the profile or linked public website.
-- **Missing results:** review source evidence and try clearer topics or another platform in a new search. SERP discovery uses one profile page and one content page per topic; collected posts and profiles are bounded by depth. No exhaustive topic coverage is implied.
+- **Missing results:** review source evidence and try clearer topics or another platform in a new search. Depth offers 5, 10, 20, 50, 100, or 250 profiles per platform. SERP discovery paginates profile/content searches in resumable batches of at most six pages, capped at 48 pages per platform across topics; collected posts and profiles are bounded by depth. No exhaustive topic coverage is implied.
 - **Browser storage unavailable:** keep the tab open and export results; browser-local persistence may be blocked.
 
 ## Rollback

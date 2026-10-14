@@ -44,6 +44,7 @@ import {
 } from "./types";
 import { useSearch } from "./useSearch";
 import { localSetupPrompt } from "./setup";
+import { searchDepths, searchPagesPerQuery } from "./limits";
 import { SampleArt, samplePortrait } from "./SampleArt";
 
 type View = "discover" | "shortlist" | "history";
@@ -730,15 +731,11 @@ export default function App() {
                         disabled={search.running}
                         onChange={(e) => setDepth(Number(e.target.value))}
                       >
-                        <option value={5}>
-                          Focused · up to 5 / platform
-                        </option>
-                        <option value={10}>
-                          Balanced · up to 10 / platform
-                        </option>
-                        <option value={20}>
-                          Broader · up to 20 / platform
-                        </option>
+                        {searchDepths.map(value => (
+                          <option key={value} value={value}>
+                            {value === 5 ? 'Focused' : value === 10 ? 'Balanced' : value === 20 ? 'Broader' : value === 50 ? 'Deep' : value === 100 ? 'Extended' : 'Maximum'} · up to {value} / platform
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown size={14} />
                     </div>
@@ -775,7 +772,7 @@ export default function App() {
                   </button>
                 </div>
                 <details className="usage-disclosure"><summary>Collection limits & pricing</summary><p className="usage-summary">
-                  Up to {depth} profiles per platform. YouTube/TikTok: up to {depth} posts per topic. Instagram/LinkedIn/X: 2 search pages per topic (profiles + content), then up to {depth} discovered posts per platform to identify authors. Search, post collection and profile collection are separate paid stages. <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">View pricing <ArrowUpRight size={11} /></a>
+                  Up to {depth} profiles per platform. YouTube/TikTok: up to {depth} posts per topic. Instagram/LinkedIn/X: up to {2 * searchPagesPerQuery(depth, Math.min(3, Math.max(1, new Set(brief.split(/[,\n]/).map(term => term.trim()).filter(Boolean)).size)))} search pages per topic (profiles + content), then up to {depth} discovered posts per platform to identify authors. Actual results may be fewer. Search, post collection and profile collection are separate paid stages. <a href="https://brightdata.com/pricing" target="_blank" rel="noreferrer">View pricing <ArrowUpRight size={11} /></a>
                 </p></details>
                 <p className="form-bottom">Your own key required. Sample mode needs no key.</p>
                 {connected && !searchAvailable && (

@@ -40,7 +40,7 @@ test('trigger sends official bounded object schema and forwards visitor key only
   assert.deepEqual(await response.json(), { snapshot: 'sd_valid123' });
 });
 test('YouTube native keyword discovery uses its dataset and string post counts at every supported depth', async () => {
-  for (const depth of [5, 10, 20]) {
+  for (const depth of [5, 10, 20, 50, 100, 250]) {
     let calls = 0;
     const response = await handleRequest(request('trigger', { platform: 'youtube', stage: 'discover', keywords: ['AI tools', 'Meta ads'], depth }), env, mock((target, init) => {
       calls++;
@@ -68,7 +68,7 @@ test('all five profile triggers pin datasets, canonical inputs and one-row limit
     { platform: 'x', url: 'https://twitter.com/Maker', input: { url: 'https://x.com/maker', max_number_of_posts: 3 }, dataset: 'gd_lwxmeb2u1cniijd7t4' },
   ];
   for (const fixture of fixtures) {
-    for (const depth of [5, 10, 20]) {
+    for (const depth of [5, 10, 20, 50, 100, 250]) {
       const response = await handleRequest(request('trigger', { platform: fixture.platform, stage: 'enrich', urls: [fixture.url, fixture.url], depth }), env, mock((target, init) => {
         const url = new URL(target);
         assert.equal(url.searchParams.get('dataset_id'), fixture.dataset);
@@ -183,7 +183,7 @@ test('website scanning only delegates public HTTPS targets to Bright Data, never
   assert.equal((await response.json()).contacts[0].sourceUrl, 'https://maker.io/');
 });
 test('oversized bodies and rate limits are rejected without collection', async () => {
-  const huge = request('trigger', { value: 'x'.repeat(17_000) });
+  const huge = request('trigger', { value: 'x'.repeat(129_000) });
   assert.equal((await handleRequest(huge, env, mock(() => reply({})))).status, 502);
   const limited = await handleRequest(request('connect', {}), { ...env, API_LIMITER: { limit: async () => ({ success: false }) } }, mock(() => reply({})));
   assert.equal(limited.status, 429);
@@ -203,4 +203,94 @@ test('one failed SERP term preserves paid successful keyword evidence', async ()
     return b.url.includes('failing') ? reply({ status_code: 502, body: '' }) : reply({ organic: [{ link: 'https://x.com/maker', title: 'AI creator' }] });
   }));
   assert.equal(response.status, 200); const data = await response.json(); assert.equal(data.records.length, 2); assert.equal(data.failures[0].keyword, 'failing');
+});
+
+test('large SERP searches paginate distinct URLs and preserve successful pages within the request budget', async () => {
+  for (const platform of ['instagram', 'linkedin', 'x']) {
+    for (const [depth, keywords, pages] of [[100, ['AI'], 5], [250, ['AI'], 13], [250, ['AI', 'ads', 'tools'], 8]] as const) {
+      const targets: string[] = [];
+      const fetcher = mock((url, init) => {
+        if (url.endsWith('get_all_zones')) return reply([{name:'search',type:'serp',status:'active'}]);
+        const target = JSON.parse(String(init?.body)).url;
+        targets.push(target);
+        const page = Number(new URL(target).searchParams.get('start')) / 10;
+        return page === 1 ? reply({status_code:502,body:''}) : reply({organic:[]});
+      });
+      let offset: number | null = 0;
+      const data: {records:{searchPage:number}[]; failures:{page:number}[]} = {records:[],failures:[]};
+      while (offset !== null) {
+        const before = targets.length;
+        const response = await handleRequest(request('discover', {platform, keywords, depth, offset}), env, fetcher);
+        assert.equal(response.status, 200);
+        assert.ok(targets.length - before <= 6);
+        const batch = await response.json();
+        data.records.push(...batch.records);
+        data.failures.push(...batch.failures);
+        offset = batch.nextOffset;
+      }
+      assert.equal(targets.length, 2 * keywords.length * pages);
+      assert.equal(new Set(targets).size, targets.length);
+      assert.ok(targets.length <= 48);
+      assert.equal(data.failures.length, 2 * keywords.length);
+      assert.ok(data.failures.every((f: {page:number}) => f.page === 2));
+      assert.equal(data.records.length, targets.length - data.failures.length);
+      assert.equal(Math.max(...data.records.map((r: {searchPage:number}) => r.searchPage)), pages);
+    }
+  }
+});
+
+test('large native snapshots stream past 8 MB without retaining unused video payloads or retriggering', async () => {
+  let calls = 0;
+  const records = Array.from({length:100}, (_, i) => ({url:`https://youtube.com/watch?v=${i}`,channel_url:`https://www.youtube.com/@maker${i}`,title:'AI tools',description:'Contact hello@maker.io',transcript:'x'.repeat(90_000)}));
+  const raw = records.map(r => JSON.stringify(r)).join('\n');
+  assert.ok(raw.length > 8_000_000);
+  const response = await handleRequest(request('result?id=sd_large12345'), env, mock(url => {
+    calls++;
+    assert.ok(url.includes('/snapshot/sd_large12345?format=ndjson'));
+    return new Response(new ReadableStream({start(controller) {
+      for (let i = 0; i < raw.length; i += 64_000) controller.enqueue(new TextEncoder().encode(raw.slice(i, i + 64_000)));
+      controller.close();
+    }}));
+  }));
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.records.length, 100);
+  assert.equal(data.records[99].channel_url, records[99].channel_url);
+  assert.equal(data.records[0].description, 'Contact hello@maker.io');
+  assert.equal(data.records[0].transcript, undefined);
+  assert.equal(calls, 1);
+});
+
+test('snapshot control objects remain pending across formatting, newlines and stream boundaries', async () => {
+  for (const raw of ['{"snapshot_id":"sd_valid123"}', '{"snapshot_id":"sd_valid123"}\n', '{\n  "snapshot_id": "sd_valid123"\n}\n', '{"status":"running"}\n']) {
+    const response = await handleRequest(request('result?id=sd_valid123'), env, mock(() => new Response(new ReadableStream({start(controller) {
+      for (const char of raw) controller.enqueue(new TextEncoder().encode(char));
+      controller.close();
+    }}))));
+    assert.equal(response.status, 202);
+    assert.deepEqual(await response.json(), {pending:true});
+  }
+});
+
+test('large profile and post batches fit the relay and reject over-depth input before paid dispatch', async () => {
+  const urls = Array.from({length:250}, (_, i) => `https://www.linkedin.com/in/creator-${i}-${'a'.repeat(80)}/`);
+  for (const [stage, batch] of [['enrich', urls], ['posts', urls.map((_, i) => `https://www.linkedin.com/posts/creator-${i}-${'a'.repeat(80)}-activity-${i}`)]] as const) {
+    assert.ok(JSON.stringify(batch).length > 16_000);
+    let calls = 0;
+    const fetcher = mock((_, init) => {
+      calls++;
+      const body = JSON.parse(String(init?.body));
+      assert.equal(body.input.length, 250);
+      assert.equal(body.limit_per_input, 1);
+      return reply({snapshot_id:'sd_large12345'});
+    });
+    assert.equal((await handleRequest(request('trigger', {platform:'linkedin', stage, depth:250, urls:batch}), env, fetcher)).status, 200);
+    assert.equal((await handleRequest(request('trigger', {platform:'linkedin', stage, depth:100, urls:batch}), env, fetcher)).status, 400);
+    assert.equal(calls, 1);
+  }
+  for (const depth of [0, 21, 251, 1000, 100.5, '100', null]) {
+    let calls = 0;
+    assert.equal((await handleRequest(request('discover', {platform:'x', keywords:['AI'], depth}), env, mock(() => { calls++; return reply({}); }))).status, 400);
+    assert.equal(calls, 0);
+  }
 });

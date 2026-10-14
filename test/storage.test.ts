@@ -39,3 +39,19 @@ test('durable creator state survives discarded job references and legacy records
     assert.equal(restored[3].profileStatus, undefined);
   }
 });
+
+test('larger searches and submitted batches survive history and snapshot restoration', () => {
+  values.clear();
+  const configs = [5, 20, 50, 100, 250, 251, 1000].map(depth => ({brief:'AI', keywords:['AI'], platforms:['youtube'], depth}));
+  store('history', configs);
+  store('jobs', configs.map(config => ({platform:'youtube', stage:'enrich', snapshot:'sd_large12345', createdAt:Date.now(), config})), true);
+  assert.deepEqual(recentSearches().map(c => c.depth), [5, 20, 50, 100, 250]);
+  assert.deepEqual(pendingJobs().map(j => j.config.depth), [5, 20, 50, 100, 250]);
+});
+
+test('completed SERP batches restore without a snapshot while native discovery still requires one', () => {
+  values.clear();
+  store('jobs', ['instagram','linkedin','x','youtube','tiktok'].map(platform => ({platform,stage:'discover',snapshot:'',createdAt:Date.now(),searchOffset:6,searchRecords:[{organic:[]}],config:{brief:'AI',keywords:['AI'],platforms:[platform],depth:100}})), true);
+  assert.deepEqual(pendingJobs().map(j => j.platform), ['instagram','linkedin','x']);
+  assert.ok(pendingJobs().every(j => j.searchOffset === 6 && j.searchRecords?.length === 1));
+});

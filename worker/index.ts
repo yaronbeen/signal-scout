@@ -1,5 +1,7 @@
 import { canonicalPost, canonicalProfile, safeUrl, websiteContacts } from "../src/data";
 import { platforms, type Platform } from "../src/types";
+import { isSearchDepth, searchDepths, searchPagesPerQuery } from "../src/limits";
+import { readSnapshot } from "./snapshot";
 
 interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -135,7 +137,14 @@ async function upstream(
       504,
     );
   }
-  const source = await limitedText(response);
+  let source: string;
+  try {
+    source = response.ok && path.startsWith('/datasets/v3/snapshot/')
+      ? await readSnapshot(response)
+      : await limitedText(response);
+  } catch {
+    throw new ApiError('The snapshot could not be read within download limits. Existing collection references are preserved; download the snapshot from Bright Data if this persists.', 502);
+  }
   if (!response.ok) throw upstreamError(response.status, source);
   // /request format=json wraps the origin status and body, including failures behind HTTP 200.
   let envelope: { status_code?: number; body?: unknown } | undefined;
@@ -202,9 +211,9 @@ function keywords(value: unknown): string[] {
   return [...new Set(value.map((k) => k.trim()))];
 }
 function depth(value: unknown): number {
-  if (![5, 10, 20].includes(value as number))
-    throw new ApiError("Choose a search depth of 5, 10, or 20.");
-  return value as number;
+  if (!isSearchDepth(value))
+    throw new ApiError(`Choose a search depth of ${searchDepths.join(', ')}.`);
+  return value;
 }
 export function collectionPlan(body: Record<string, unknown>) {
   const p = platform(body.platform);
@@ -288,7 +297,7 @@ export function publicWebsite(value: unknown): string {
   return url;
 }
 async function bodyJson(request: Request): Promise<Record<string, unknown>> {
-  const source = await limitedText(request as unknown as Response, 16_000);
+  const source = await limitedText(request as unknown as Response, 128_000);
   try {
     const b = JSON.parse(source);
     if (!b || Array.isArray(b) || typeof b !== "object") throw new Error();
@@ -374,7 +383,7 @@ export async function handleRequest(
     if (url.pathname === "/api/discover") {
       const b = await bodyJson(request);
       const p = platform(b.platform);
-      depth(b.depth);
+      const d = depth(b.depth);
       const terms = keywords(b.keywords);
       if (!["instagram", "linkedin", "x"].includes(p))
         throw new ApiError("Use native content discovery for this platform.");
@@ -404,13 +413,20 @@ export async function handleRequest(
           linkedin: [`site:linkedin.com/in ${term}`, `site:linkedin.com ${term} (inurl:/posts/ OR inurl:/feed/update/)`],
           x: [`site:twitter.com ${term} -inurl:/status/`, `site:twitter.com ${term} inurl:/status/`],
         }[p as 'instagram' | 'linkedin' | 'x'];
-        return plans.map((query, i) => ({query, keyword: term, kind: i ? 'content' : 'profile'}));
+        return plans.flatMap((query, i) => Array.from(
+          { length: searchPagesPerQuery(d, terms.length) },
+          (_, page) => ({query, keyword: term, kind: i ? 'content' : 'profile', page}),
+        ));
       });
+      const offset = b.offset === undefined ? 0 : b.offset;
+      if (typeof offset !== 'number' || !Number.isInteger(offset) || offset < 0 || offset >= queries.length || offset % 6 !== 0)
+        throw new ApiError('Choose a valid search batch.');
+      const batch = queries.slice(offset, offset + 6);
       const settled = await Promise.allSettled(
-        queries.map(async ({query, keyword, kind}) => {
+        batch.map(async ({query, keyword, kind, page}) => {
           const result = await upstream("/request", token, fetcher, {
             zone,
-            url: `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&brd_json=1&hl=en&gl=us`,
+            url: `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&brd_json=1&hl=en&gl=us&start=${page * 10}`,
             format: "json",
           });
           if (
@@ -422,7 +438,7 @@ export async function handleRequest(
               "The search API returned no readable organic results. Check your SERP API configuration.",
               502,
             );
-          return { ...(result as object), keyword, searchKind: kind };
+          return { ...(result as object), keyword, searchKind: kind, searchPage: page + 1 };
         }),
       );
       const records = settled.flatMap((result) =>
@@ -432,8 +448,9 @@ export async function handleRequest(
         result.status === "rejected"
           ? [
               {
-                keyword: queries[i].keyword,
-                kind: queries[i].kind,
+                 keyword: batch[i].keyword,
+                 kind: batch[i].kind,
+                 page: batch[i].page + 1,
                 error:
                   result.reason instanceof ApiError
                     ? result.reason.message
@@ -447,7 +464,7 @@ export async function handleRequest(
         const reason = failure?.status === 'rejected' ? failure.reason : undefined;
         throw new ApiError(`Search zone “${zone}”: ${reason instanceof ApiError ? reason.message : 'No search results were returned.'}`, reason instanceof ApiError ? reason.status : 502);
       }
-      return json({ records, failures });
+      return json({ records, failures, nextOffset: offset + batch.length < queries.length ? offset + batch.length : null });
     }
     if (url.pathname === "/api/trigger") {
       const plan = collectionPlan(await bodyJson(request));
@@ -504,7 +521,7 @@ export async function handleRequest(
         return json({ status });
       }
       const data = await upstream(
-        `/datasets/v3/snapshot/${id}?format=json`,
+        `/datasets/v3/snapshot/${id}?format=ndjson`,
         token,
         fetcher,
       );

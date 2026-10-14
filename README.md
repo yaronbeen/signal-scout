@@ -95,7 +95,7 @@ Public email discovery is not mailbox verification. Some creators publish no ema
 
 Profile state is retained per creator: pending means profile collection has not completed; partial means it failed or returned no usable profile; complete means a matching profile was returned. Older saved records without a collection state remain unknown. Saving a candidate or discarding job references does not turn it into a completed profile. No-email wording applies to completed collection, not unfinished research.
 
-Search depth controls how many candidates per platform are enriched. YouTube/TikTok content discovery is capped per keyword. Instagram/LinkedIn/X read two search pages per keyword (profiles and content), collect up to the selected depth of discovered posts per platform, then enrich up to that depth of profiles. Search, post collection, and profile collection are separate paid stages. Depth is a ceiling, not a promise of that many results.
+Search depth offers **5, 10, 20, 50, 100, or 250 candidates per platform**. Across all five platforms, 100 allows up to 500 profiles and 250 allows up to 1,250. YouTube/TikTok content discovery is capped at the selected depth per keyword. Instagram/LinkedIn/X paginate both profile and content searches: each query reads up to `ceil(depth / 20)` ten-result pages, bounded to 48 total search pages per platform across all keywords. They collect up to the selected depth of discovered posts per platform, then enrich up to that depth of profiles. Search, post collection, and profile collection are separate paid stages. Depth is a ceiling, not a promise of that many results; duplicates, indexing, and topic matching can reduce counts. The selected depth never expands automatically.
 
 ## How it works
 
@@ -107,6 +107,8 @@ The React frontend talks to a small same-origin Cloudflare Worker. The Worker va
 - **Optional contact scan:** explicitly fetch a linked public website through Bright Data Web Unlocker → extract visible public email.
 
 Long-running scrapers return snapshot IDs. The browser polls short status requests rather than holding open a server connection. Successful platforms keep their results even if another platform fails.
+
+Larger SERP searches run in batches of at most six pages, saving completed pages before requesting the next batch. Pause/resume continues from that point; an unresolved batch needs explicit authorization before repeating it. Snapshot downloads stream NDJSON and discard unused fields such as video transcripts and comments, keeping creator evidence and contact provenance within bounded memory.
 
 ### Discovery and platform filters
 

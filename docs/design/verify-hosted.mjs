@@ -31,6 +31,12 @@ try {
     assert(response?.ok(), 'Hosted homepage must return HTTP 200');
     const csp = response.headers()['content-security-policy'] || '';
     assert(csp.includes("default-src 'self'") && csp.includes("frame-ancestors 'none'"), 'Hosted response must include the constrained CSP');
+    const depths = await page.locator('#depth option').evaluateAll(options => options.map(option => Number(option.value)));
+    assert(JSON.stringify(depths) === JSON.stringify([5, 10, 20, 50, 100, 250]), 'Hosted search must offer all six supported depths');
+    await page.getByLabel('Search depth', { exact: true }).selectOption('100');
+    await page.locator('.usage-disclosure summary').click();
+    assert((await page.locator('.usage-summary').innerText()).includes('Up to 100 profiles per platform'), 'Hosted collection disclosure must reflect selected depth');
+    await page.screenshot({ path: `${evidenceDir}hosted-${device}-depth-100.png`, fullPage: true });
     await page.getByRole('button', { name: /Explore (?:a )?sample/ }).first().click();
     await page.locator('.creator-card').first().waitFor();
     assert(await page.locator('.creator-card').count() === 8, 'Sample must contain eight labeled creators');
@@ -64,7 +70,7 @@ try {
     assert(errors.length === 0, 'Hosted smoke must have no browser exceptions');
     assert(blocked.length === 0, 'Sample/setup actions must not attempt paid API calls');
     assert(externalFonts.length === 0, 'Fonts must remain self-hosted');
-    results.push({ device, viewport, health: true, csp: true, sampleCreators: 8, detail: true, shortlist: true, exportCollectionStatus: true, setupHandoffs: true, visitorKeyDialog: true, horizontalOverflow: false, errors, paidApiCalls: blocked, externalFonts });
+    results.push({ device, viewport, health: true, csp: true, depths, selectedDepthDisclosure: true, sampleCreators: 8, detail: true, shortlist: true, exportCollectionStatus: true, setupHandoffs: true, visitorKeyDialog: true, horizontalOverflow: false, errors, paidApiCalls: blocked, externalFonts });
     await context.close();
   }
   await writeFile(`${evidenceDir}hosted-release-smoke.json`, JSON.stringify({ base, checkedAt: new Date().toISOString(), results }, null, 2));
