@@ -13,6 +13,47 @@ const author='https://www.instagram.com/media_buyer/';
 const searchRecords=[{organic:[{link:'https://www.instagram.com/profile_only/',title:'Meta ads consultant'},{link:post,title:'Someone shares ads advice'}]}];
 const postRecords=[{url:post,profile_url:author,user_posted:'media_buyer',description:'How I test Meta ads every week. Contact deals@buyer.io',date_posted:'2026-10-12'}];
 
+for (const outcome of ['error', 'missing'] as const) {
+  test(`merged search and post topics survive ${outcome} profile enrichment`, async ({ page }) => {
+    await page.route('**/api/**', route => {
+      const url = new URL(route.request().url());
+      if (url.pathname.endsWith('/connect')) return route.fulfill({ json: { connected: true, searchAvailable: true, searchZones: ['working'], unlockerZone: '' } });
+      if (url.pathname.endsWith('/discover')) return route.fulfill({ json: { records: [{ organic: [{ link: author, title: 'AI tools consultant' }, { link: post, title: 'Automation advice' }] }] } });
+      if (url.pathname.endsWith('/trigger')) return route.fulfill({ json: { snapshot: route.request().postDataJSON().stage === 'posts' ? 'sd_topicsPosts' : 'sd_topicsProfiles' } });
+      if (url.pathname.endsWith('/status')) return route.fulfill({ json: { status: 'ready' } });
+      if (url.pathname.endsWith('/result')) return route.fulfill({ json: { records: url.searchParams.get('id') === 'sd_topicsPosts'
+        ? [{ url: post, profile_url: author, user_posted: 'media_buyer', description: 'Automation workflows every week' }]
+        : outcome === 'error' ? [{ input: { url: author }, error: 'Profile unavailable' }] : [] } });
+      return route.abort();
+    });
+    await setup(page);
+    await page.getByLabel('Topic or keyword', { exact: true }).fill('AI tools, automation');
+    await page.getByRole('main').getByRole('button', { name: 'Discover creators', exact: true }).click();
+    await expect(page.locator('.progress-item.done')).toHaveCount(1);
+    await expect(page.locator('.progress-item.done')).toContainText('1 partial profile');
+    for (const topic of ['ai tools', 'automation']) {
+      await page.getByLabel('Matched topic', { exact: true }).selectOption(topic);
+      await expect(page.locator('.creator-card')).toHaveCount(1);
+    }
+    await page.getByLabel('Has matching collected post').check();
+    await expect(page.locator('.creator-card')).toHaveCount(1);
+    await page.getByLabel('Matched topic', { exact: true }).selectOption('ai tools');
+    await expect(page.locator('.creator-card')).toHaveCount(0);
+    await page.getByLabel('Has matching collected post').uncheck();
+    await page.getByRole('button', { name: 'Save 1 new creator', exact: true }).click();
+    await page.reload();
+    await page.getByRole('button', { name: /Your shortlist/ }).click();
+    await page.getByLabel('Matched topic', { exact: true }).selectOption('ai tools');
+    await expect(page.locator('.creator-card')).toHaveCount(1);
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Export CSV/ }).click();
+    const stream = await (await downloading).createReadStream();
+    let csv = ''; for await (const chunk of stream!) csv += chunk.toString();
+    expect(csv).toContain('"AI tools; automation"');
+    expect(csv).toContain('"partial"');
+  });
+}
+
 test('post-only authors are discovered, enriched and ranked before search-only profiles',async({page})=>{
   const stages: string[]=[];
   await page.route('**/api/**',async route=>{

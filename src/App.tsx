@@ -19,19 +19,20 @@ import {
   Radio,
   Search,
   ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Terminal,
   X as Close,
 } from "lucide-react";
 import { api } from "./api";
-import { compareRelevance, contentSignals, formatCount, matchesTopic, relevanceLabel, safeUrl, toCsv } from "./data";
+import { compareRelevance, contentSignals, filterCreators, formatCount, matchesTopic, relevanceLabel, safeUrl, toCsv } from "./data";
 import {
   isConfig,
   load,
   recentSearches,
   savedCreators,
+  savedNotes,
   store,
+  storeNote,
 } from "./storage";
 import { sampleCreators } from "./sample";
 import {
@@ -176,6 +177,23 @@ function Modal({
     </dialog>
   );
 }
+function ShortlistNote({ value, onSave }: { value: string; onSave: (note: string) => boolean }) {
+  const [draft, setDraft] = useState(value);
+  const [message, setMessage] = useState('');
+  const [failed, setFailed] = useState(false);
+  return <form className="shortlist-note" onSubmit={e => {
+    e.preventDefault();
+    const saved = onSave(draft);
+    setFailed(!saved);
+    setMessage(saved ? 'Note saved in this browser.' : 'Could not save to this browser. Your note is kept for this session; export CSV before closing.');
+  }}>
+    <label className="field-label" htmlFor="shortlist-note">Your shortlist note</label>
+    <textarea id="shortlist-note" value={draft} maxLength={2000} rows={3} aria-describedby="note-help" onChange={e => { setDraft(e.target.value); setMessage(''); }} placeholder="Why are they a good fit? What should you ask them?" />
+    <small id="note-help">Saved only in this browser and included in CSV exports. Save changes before closing.</small>
+    <button className="secondary-button" type="submit">Save note</button>
+    {message && <p className={failed ? 'form-error' : 'note-feedback'} role="status">{message}</p>}
+  </form>;
+}
 export default function App() {
   const search = useSearch();
   const [view, setView] = useState<View>("discover");
@@ -203,14 +221,20 @@ export default function App() {
   const [depth, setDepth] = useState(initialConfig?.depth || 5);
   const [formError, setFormError] = useState("");
   const [shortlist, setShortlist] = useState<Creator[]>(savedCreators);
+  const [notes, setNotes] = useState(savedNotes);
   const [history, setHistory] = useState<SearchConfig[]>(recentSearches);
   const [filterPlatform, setFilterPlatform] = useState("all");
   const [emailOnly, setEmailOnly] = useState(false);
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("relevance");
-  const [minimum, setMinimum] = useState(0);
+  const [minimum, setMinimum] = useState('');
+  const [maximum, setMaximum] = useState('');
+  const [topic, setTopic] = useState('');
+  const [matchingPostOnly, setMatchingPostOnly] = useState(false);
   const [details, setDetails] = useState<Creator | null>(null);
   const [toast, setToast] = useState("");
+  const [shortlistStorageWarning, setShortlistStorageWarning] = useState('');
+  const shortlistWarningRef = useRef<HTMLParagraphElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState("");
   const [elapsed, setElapsed] = useState(0);
@@ -250,7 +274,7 @@ export default function App() {
         return merged;
       });
       if (!changed) return current;
-      store("shortlist", next);
+      if (!store("shortlist", next)) setShortlistStorageWarning('Could not save shortlist updates to this browser. Changes are kept for this session; export CSV before closing.');
       return next;
     });
     setDetails(current => {
@@ -270,6 +294,9 @@ export default function App() {
     if (keyModal || help || details?.id) setToast("");
   }, [keyModal, help, details?.id]);
   useEffect(() => {
+    if (shortlistStorageWarning && details) shortlistWarningRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [shortlistStorageWarning, details?.id]);
+  useEffect(() => {
     if (!search.running) return;
     const start = Date.now();
     const timer = setInterval(
@@ -278,12 +305,18 @@ export default function App() {
     );
     return () => clearInterval(timer);
   }, [search.running]);
-  function go(next: View) {
-    setView(next);
+  function clearFilters() {
     setFilter("");
     setFilterPlatform("all");
     setEmailOnly(false);
-    setMinimum(0);
+    setMinimum('');
+    setMaximum('');
+    setTopic('');
+    setMatchingPostOnly(false);
+  }
+  function go(next: View) {
+    setView(next);
+    clearFilters();
   }
   function toggleSaved(c: Creator) {
     if (!shortlist.some(s => s.id === c.id) && shortlist.some(s => Boolean(s.sample) !== Boolean(c.sample))) {
@@ -303,6 +336,24 @@ export default function App() {
           ? `${c.name} added to your shortlist`
           : `${c.name} removed from your shortlist`,
       );
+  }
+  function saveFiltered() {
+    const additions = visible.filter(c => !shortlist.some(s => s.id === c.id));
+    if (!additions.length) return;
+    const next = [...shortlist, ...additions];
+    if (next.some(c => Boolean(c.sample) !== Boolean(next[0].sample))) {
+      setToast('Keep sample and live creators separate. Remove saved sample creators before saving live results, or export live results directly.');
+      return;
+    }
+    setShortlist(next);
+    setToast(store('shortlist', next)
+      ? `${additions.length} creator${additions.length === 1 ? '' : 's'} added to your shortlist`
+      : 'Could not save to this browser. Export your shortlist before closing.');
+  }
+  function saveNote(id: string, note: string): boolean {
+    const next = { ...notes, [id]: note };
+    setNotes(next);
+    return storeNote(id, note);
   }
   async function connect(e: FormEvent) {
     e.preventDefault();
@@ -383,9 +434,7 @@ export default function App() {
     setActiveConfig(c);
     setLastBrief(c.brief);
     setElapsed(0);
-    setFilterPlatform("all");
-    setEmailOnly(false);
-    setFilter("");
+    clearFilters();
     const next = [c, ...history.filter((h) => h.brief !== c.brief)].slice(
       0,
       15,
@@ -450,7 +499,7 @@ export default function App() {
   }
   function download(data: Creator[]) {
     const url = URL.createObjectURL(
-      new Blob([toCsv(data)], { type: "text/csv;charset=utf-8;" }),
+      new Blob([toCsv(data, notes)], { type: "text/csv;charset=utf-8;" }),
     );
     const a = document.createElement("a");
     a.href = url;
@@ -514,7 +563,8 @@ export default function App() {
       setShortlist(current => {
         if (!current.some(s => s.id === c.id)) return current;
         const next = current.map(s => s.id === c.id ? { ...updated, contacts: [...updated.contacts, ...s.contacts.filter(contact => !updated.contacts.some(n => n.email === contact.email))] } : s);
-        store("shortlist", next); return next;
+        if (!store("shortlist", next)) setShortlistStorageWarning('Could not save shortlist updates to this browser. Changes are kept for this session; export CSV before closing.');
+        return next;
       });
       setToast(
         response.contacts.length
@@ -528,17 +578,17 @@ export default function App() {
     }
   }
   const source = view === "shortlist" ? shortlist : search.creators;
+  useEffect(() => {
+    if (topic && !source.some(c => c.matchedTerms.some(term => term.toLowerCase() === topic))) setTopic('');
+  }, [source, topic]);
   const audienceUnit = filterPlatform === 'youtube' ? 'subscribers' : filterPlatform === 'all' ? 'followers / subscribers' : 'followers';
-  const visible = source
-    .filter(
-      (c) =>
-        (filterPlatform === "all" || c.platform === filterPlatform) &&
-        (!emailOnly || c.contacts.length > 0) &&
-        (!minimum || (c.followers !== null && c.followers >= minimum)) &&
-        `${c.name} ${c.handle} ${c.bio}`
-          .toLowerCase()
-          .includes(filter.toLowerCase()),
-    )
+  const min = minimum === '' ? null : Number(minimum);
+  const max = maximum === '' ? null : Number(maximum);
+  const rangeError = [min, max].some(n => n !== null && (!Number.isSafeInteger(n) || n < 0))
+    ? 'Use whole audience counts of zero or more.'
+    : min !== null && max !== null && min > max ? 'Minimum audience must not exceed maximum audience.' : '';
+  const topics = [...new Set(source.flatMap(c => c.matchedTerms.map(term => term.toLowerCase())))].sort();
+  const visible = filterCreators(source, { platform: filterPlatform, query: filter, emailOnly, minimum: min, maximum: max, topic, matchingPostOnly })
     .sort((a, b) =>
       sort === "audience"
         ? (b.followers ?? -1) - (a.followers ?? -1)
@@ -546,6 +596,7 @@ export default function App() {
           ? Number(b.contacts.length > 0) - Number(a.contacts.length > 0)
            : compareRelevance(a,b),
     );
+  const unsavedCount = visible.filter(c => !shortlist.some(s => s.id === c.id)).length;
   const emailCount = source.filter((c) => c.contacts.length).length;
   const usedPlatforms = new Set(source.map((c) => c.platform)).size;
   const done = platforms.filter(
@@ -557,6 +608,11 @@ export default function App() {
   const hasWork = search.creators.length > 0 || search.jobs.length > 0 || hasProgress || search.running;
   const showComposer = !hasWork || editing;
   const collectedConfig = search.jobs[0]?.config || activeConfig;
+  const filteredJobs = view === 'discover' ? search.jobs.filter(j => filterPlatform === 'all' || j.platform === filterPlatform) : [];
+  const collectingJobs = search.running ? filteredJobs.filter(j => ['discovering', 'enriching'].includes(search.progress[j.platform].phase)) : [];
+  const collectingLabel = filterPlatform === 'all' ? 'Creator' : platformNames[filterPlatform as Platform];
+  const collectionStatus = collectingJobs.map(j => `${platformNames[j.platform]}: ${search.progress[j.platform].message}`).join(' · ');
+  const filteredFailure = view === 'discover' && platforms.some(p => (filterPlatform === 'all' || p === filterPlatform) && search.progress[p].phase === 'error');
   useEffect(() => {
     if (hasWork && view === "discover" && !editing) focusResults();
   }, [hasWork, view, editing, search.running]);
@@ -1014,7 +1070,7 @@ export default function App() {
                           <strong>{source.length} {sample ? "sample creators" : "creators discovered"}</strong> · {emailCount} with public email · {usedPlatforms} platforms
                         </>
                       ) : (
-                        hasProgress ? "Check the platform outcomes above. Broaden topics for no matches, or resolve the collection error and resume saved work." : "From a topic to a shortlist. All the context you need, none of the busywork."
+                         search.running ? "Collection is in progress. Profiles appear here as each platform returns results." : hasProgress ? "Check the platform outcomes above. Broaden topics for no matches, or resolve the collection error and resume saved work." : "From a topic to a shortlist. All the context you need, none of the busywork."
                       )}
                     </p>
                   </div>
@@ -1029,7 +1085,12 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                {search.running && !source.length && <div className="creator-grid collection-skeletons" aria-hidden="true"><div className="skeleton-card"><span /><span /><span /><span /></div><div className="skeleton-card"><span /><span /><span /><span /></div></div>}
+                {view === 'discover' && search.running && !source.length && <div className="collection-wait" role="status">
+                  <div className="scout-radar" aria-hidden="true"><span /><i /><b /></div>
+                  <h3>Finding your next collaborators.</h3>
+                  <p>{collectionStatus || 'Waiting for the collection to return profiles…'}</p>
+                  <small>Results appear as they arrive. No need to refresh.</small>
+                </div>}
                 {source.length > 0 && (
                   <>
                     {source.some((c) => c.sample) && (
@@ -1075,36 +1136,22 @@ export default function App() {
                         {platforms.map(p => <option key={p} value={p}>{platformNames[p]} ({source.filter(c => c.platform === p).length})</option>)}
                       </select>
                     </label>
+                    <div className="filter-panel" role="group" aria-label="Creator filters">
                     <div className="filter-row">
-                      <label className="filter-search">
+                      <label className="search-filter"><span>Search creators</span><span className="filter-search">
                         <Search size={18} />
                         <input aria-label="Filter creators" value={filter} onChange={e => setFilter(e.target.value)} placeholder="Search name or bio" />
-                      </label>
-                      <label className="email-toggle">
-                        <input
-                          type="checkbox"
-                          checked={emailOnly}
-                          onChange={(e) => setEmailOnly(e.target.checked)}
-                        />
-                        <span />
-                        Has email
-                      </label>
+                      </span></label>
                       <div className="filter-selects">
-                        <label>
-                          <SlidersHorizontal size={14} />
-                          <select
-                            aria-label="Minimum audience"
-                            value={minimum}
-                            onChange={(e) => setMinimum(Number(e.target.value))}
-                          >
-                            <option value={0}>Any audience size</option>
-                            <option value={1000}>1K+ {audienceUnit}</option>
-                            <option value={10000}>10K+ {audienceUnit}</option>
-                            <option value={100000}>100K+ {audienceUnit}</option>
+                        <label className="topic-filter">
+                          <span>Matched topic</span>
+                          <select aria-label="Matched topic" value={topic} onChange={e => setTopic(e.target.value)}>
+                            <option value="">Any matched topic</option>
+                            {topics.map(term => <option key={term} value={term}>{term}</option>)}
                           </select>
                         </label>
                         <label>
-                          <span>Sort:</span>
+                          <span>Sort by</span>
                           <select
                             aria-label="Sort creators"
                             value={sort}
@@ -1117,6 +1164,28 @@ export default function App() {
                         </label>
                       </div>
                     </div>
+                    <div className="evidence-filters">
+                      <fieldset className="audience-range">
+                        <legend>Audience size · {audienceUnit}</legend>
+                        <div>
+                          <label>Minimum<input type="number" inputMode="numeric" min="0" step="1" aria-label="Minimum audience" aria-invalid={Boolean(rangeError)} aria-describedby={rangeError ? 'audience-error' : undefined} placeholder="No minimum" value={minimum} onChange={e => setMinimum(e.target.value)} /></label>
+                          <label>Maximum<input type="number" inputMode="numeric" min="0" step="1" aria-label="Maximum audience" aria-invalid={Boolean(rangeError)} aria-describedby={rangeError ? 'audience-error' : undefined} placeholder="No maximum" value={maximum} onChange={e => setMaximum(e.target.value)} /></label>
+                        </div>
+                      </fieldset>
+                      <div className="filter-toggles">
+                        <label className="email-toggle"><input type="checkbox" checked={emailOnly} onChange={e => setEmailOnly(e.target.checked)} />Has email</label>
+                        <label className="email-toggle"><input type="checkbox" checked={matchingPostOnly} onChange={e => setMatchingPostOnly(e.target.checked)} />Has matching collected post</label>
+                      </div>
+                    </div>
+                    {rangeError && <p id="audience-error" className="form-error" role="alert">{rangeError}</p>}
+                    {matchingPostOnly && <p className="results-explanation">{topic ? `Requires a collected post matching “${topic}”. ` : ''}A bounded search can miss relevant posts. This is not an audience-fit score.</p>}
+                    <div className="filtered-actions">
+                      <span aria-live="polite" aria-atomic="true">Showing {visible.length} of {source.length} creators</span>
+                      <button className="text-button" onClick={clearFilters}>Clear filters</button>
+                      {view === 'discover' && <button className="secondary-button" disabled={!unsavedCount || Boolean(rangeError)} onClick={saveFiltered}><Bookmark size={15} />Save {unsavedCount} new creator{unsavedCount === 1 ? '' : 's'}</button>}
+                    </div>
+                    </div>
+                    {collectingJobs.length > 0 && visible.length > 0 && <p className="collection-inline" role="status"><LoaderCircle size={16} className="spin" aria-hidden="true" />{collectingLabel} collection in progress. More results may arrive.</p>}
                     <div className="creator-grid">
                       {visible.map((c) => (
                         <article className="creator-card" key={c.id}>
@@ -1135,6 +1204,7 @@ export default function App() {
                           <p className="creator-bio">
                             {c.bio || (profilePending(c) ? 'Profile collection is pending. Review the discovery evidence.' : 'No bio returned. Review the discovery evidence.')}
                           </p>
+                          {view === 'shortlist' && Object.hasOwn(notes, c.id) && notes[c.id] && <p className="card-note"><strong>Your note</strong>{notes[c.id]}</p>}
                           <button className="card-evidence" onClick={() => { setDetails(c); setScanError(""); }}>
                             <span className="evidence-label">{c.sample ? "Illustrative topic match" : relevanceLabel(c)}{c.matchedTerms.length > 0 && ` · ${c.matchedTerms.slice(0, 2).join(" / ")}`}</span>
                             <span className="evidence-excerpt">{contentSignals(c)[0]?.text || c.evidence.find(e => e.kind === "profile" && c.matchedTerms.some(term => matchesTopic(e.text, term)))?.text || c.evidence.find(e => e.kind === "search" && c.matchedTerms.some(term => matchesTopic(e.text, term)))?.text || c.evidence.find(e => e.kind === "profile" || e.kind === "search")?.text || c.evidence[0]?.text || "View profile evidence"}</span>
@@ -1195,22 +1265,26 @@ export default function App() {
                         </article>
                       ))}
                     </div>
-                    {!visible.length && (
+                    {!visible.length && collectingJobs.length > 0 ? <div className="collection-wait" role="status">
+                      <div className="scout-radar" aria-hidden="true"><span /><i /><b /></div>
+                      <h3>{collectingLabel} collection in progress.</h3>
+                      <p>{collectionStatus}</p>
+                      <small>More profiles may arrive. Your filters apply as results come in.</small>
+                    </div> : !visible.length && (filteredJobs.length > 0 || filteredFailure) ? <div className="empty-state small" role="status">
+                      <Pause size={26} aria-hidden="true" />
+                      <h3>{filteredFailure ? 'Collection needs attention.' : 'Collection is not running.'}</h3>
+                      <p>{filteredFailure ? 'Collection did not finish successfully. Review the platform error above; an empty result is not a confirmed no-match outcome.' : 'These results are not final. Reconnect and resume the saved collection when ready.'}</p>
+                    </div> : !visible.length && (
                       <div className="empty-state small">
                         <Search size={26} />
-                        <h3>No creators match these filters.</h3>
+                        <h3>{filterPlatform !== 'all' && !source.some(c => c.platform === filterPlatform) ? `No ${platformNames[filterPlatform as Platform]} creators in this collection.` : 'No creators match these filters.'}</h3>
                         <p>
                           Try another platform or loosen your audience and email
                           filters.
                         </p>
                         <button
                           className="secondary-button"
-                          onClick={() => {
-                            setFilter("");
-                            setFilterPlatform("all");
-                            setEmailOnly(false);
-                            setMinimum(0);
-                          }}
+                          onClick={clearFilters}
                         >
                           Clear filters
                         </button>
@@ -1260,6 +1334,7 @@ export default function App() {
               {search.storageWarning}
             </p>
           )}
+          {shortlistStorageWarning && <p className="form-error" role="alert">{shortlistStorageWarning}</p>}
           <footer className="page-footer">
             <span>Built by Yaron Been · Creator research with source evidence.</span>
             <div>
@@ -1505,6 +1580,7 @@ export default function App() {
           <p className="detail-bio">
             {details.bio || "No public bio was returned."}
           </p>
+          {shortlist.some(c => c.id === details.id) && <ShortlistNote key={details.id} value={Object.hasOwn(notes, details.id) ? notes[details.id] : ''} onSave={note => saveNote(details.id, note)} />}
           {details.enrichmentError && (
             <p className="form-error">{details.enrichmentError}</p>
           )}
@@ -1615,6 +1691,7 @@ export default function App() {
                 </small>
               </>
             )}
+            {shortlistStorageWarning && <p ref={shortlistWarningRef} className="form-error" role="alert">{shortlistStorageWarning}</p>}
             {scanError && (
               <p className="form-error" role="alert">
                 {scanError}

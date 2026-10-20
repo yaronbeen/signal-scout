@@ -216,6 +216,23 @@ export function matchesTopic(value: string, term: string): boolean {
 export function contentSignals(c: Creator): Evidence[] {
   return c.evidence.filter(e => e.kind === 'content' && c.matchedTerms.some(term => matchesTopic(e.text, term)));
 }
+export function filterCreators(creators: Creator[], filters: {
+  platform: string; query: string; emailOnly: boolean; minimum: number | null;
+  maximum: number | null; topic: string; matchingPostOnly: boolean;
+}): Creator[] {
+  const { platform, query, emailOnly, minimum, maximum, topic, matchingPostOnly } = filters;
+  if ([minimum, maximum].some(n => n !== null && (!Number.isSafeInteger(n) || n < 0)) ||
+    (minimum !== null && maximum !== null && minimum > maximum)) return [];
+  return creators.filter(c =>
+    (platform === 'all' || c.platform === platform) &&
+    (!emailOnly || c.contacts.length > 0) &&
+    (minimum === null || (c.followers !== null && c.followers >= minimum)) &&
+    (maximum === null || (c.followers !== null && c.followers <= maximum)) &&
+    `${c.name} ${c.handle} ${c.bio}`.toLowerCase().includes(query.toLowerCase()) &&
+    (!topic || c.matchedTerms.some(term => term.toLowerCase() === topic.toLowerCase())) &&
+    (!matchingPostOnly || contentSignals(c).some(e => !topic || matchesTopic(e.text, topic))),
+  );
+}
 function evidenceDate(...values: unknown[]): string | undefined {
   for (const value of values) {
     const raw = text(value).trim();
@@ -489,7 +506,7 @@ export function formatCount(n: number | null): string {
     maximumFractionDigits: 1,
   }).format(n);
 }
-export function toCsv(creators: Creator[]): string {
+export function toCsv(creators: Creator[], notes: Record<string, string> = {}): string {
   const columns = [
     "name",
     "platform",
@@ -506,6 +523,7 @@ export function toCsv(creators: Creator[]): string {
     "evidence_url",
     "collected_at",
     "sample",
+    "shortlist_note",
     "collection_status",
   ];
   const escape = (v: unknown) => {
@@ -529,6 +547,7 @@ export function toCsv(creators: Creator[]): string {
     c.evidence.map((e) => e.url).join("; "),
     c.collectedAt,
     c.sample ? "yes" : "no",
+    Object.hasOwn(notes, c.id) ? notes[c.id] : '',
     c.sample ? "sample" : c.profileStatus || "unknown",
   ]);
   return (

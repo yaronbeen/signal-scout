@@ -81,9 +81,9 @@ Keep the terminal/server running while using the app. Connect your Bright Data k
 - Names, bios, public audience counts, profile links, and websites.
 - Public emails with the URL they came from.
 - Keyword-match evidence explaining why a creator surfaced.
-- Per-platform filters, name/bio search, audience filtering, and email filtering.
-- Browser-saved shortlists and recent briefs.
-- CSV export with contacts, provenance, profile-collection status, and collection dates.
+- Per-platform filters, name/bio search, audience minimum/maximum, email availability, matched topics, and matching collected posts.
+- Browser-saved shortlists and recent briefs; save filtered results in one click and add personal notes to saved creators.
+- CSV export with contacts, provenance, profile-collection status, collection dates, and shortlist notes.
 - Pause/resume without resubmitting existing snapshots; later post/profile stages may be separately billed.
 - Responsive Clear Signal workspace with Bright Data-inspired colors, evidence-led creator cards, restrained motion, reduced-motion support, and self-hosted fonts.
 
@@ -117,6 +117,10 @@ YouTube and TikTok use keyword content searches, then collect the channels/creat
 Every word of a topic must appear as a whole word in one name, bio, or evidence item; order need not be exact. Collected matching posts rank above profile-topic and search-only matches, with post dates used to break otherwise equal scores. Cards and CSV distinguish matching posts, profile matches, and search-only evidence. Source links and available post dates appear in creator details. Google snippets are not proof of a profile bio match, and post evidence is not an audience-quality score.
 
 Results share one shortlist/export workflow, with platform tabs and counts. Audience filters say subscribers for YouTube, followers for individual other platforms, and followers/subscribers for the combined list. They are reported counts, not equivalent unique reach across networks.
+
+Filters are grouped in one responsive panel. A radar loading state identifies active collection for the selected platform instead of presenting unfinished results as “no matches.” Paused work and collection errors show recovery guidance without animation. The radar respects reduced-motion preferences and does not imply a percentage complete.
+
+Audience bounds are inclusive; blank means unbounded. Unknown counts are excluded when either bound is set. Matched-topic filtering uses recorded keyword evidence; combining it with “Has matching collected post” requires collected content matching that specific topic. Filters and bulk saving never collect additional data or spend credits. Notes are saved explicitly in creator details, stay separate from collected profiles, and are included in CSV exports. Browser-local notes remain available if a creator is removed and later saved again; clearing site data removes them. Different creators' notes save independently across tabs; reload to see another tab's changes. For simultaneous edits to the same creator, the last save wins. Notes from the earlier shared-map format remain readable; new writes do not rewrite that map. Reload older tabs after updating the app before saving notes.
 
 ### Key and storage behavior
 

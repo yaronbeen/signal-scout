@@ -1,6 +1,6 @@
 {
   "base": "https://signal-scout.yaron-been.workers.dev",
-  "checkedAt": "2026-10-14T10:05:38.350Z",
+  "checkedAt": "2026-10-20T15:58:23.709Z",
   "results": [
     {
       "device": "desktop",
@@ -20,6 +20,11 @@
       ],
       "selectedDepthDisclosure": true,
       "sampleCreators": 8,
+      "audienceRange": true,
+      "topicPostFilters": true,
+      "bulkSave": true,
+      "notesPersisted": true,
+      "notesExported": true,
       "detail": true,
       "shortlist": true,
       "exportCollectionStatus": true,
@@ -48,6 +53,11 @@
       ],
       "selectedDepthDisclosure": true,
       "sampleCreators": 8,
+      "audienceRange": true,
+      "topicPostFilters": true,
+      "bulkSave": true,
+      "notesPersisted": true,
+      "notesExported": true,
       "detail": true,
       "shortlist": true,
       "exportCollectionStatus": true,

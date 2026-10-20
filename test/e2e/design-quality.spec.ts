@@ -130,7 +130,7 @@ test('mobile Edit search, New search, filtering and recent briefs are unpaid con
   await platformFilter.selectOption('youtube');
   await expect(page.locator('.creator-card')).toHaveCount(2);
   await platformFilter.selectOption('all');
-  await page.getByLabel('Minimum audience').selectOption('10000');
+  await page.getByLabel('Minimum audience').fill('10000');
   await page.getByLabel('Sort creators').selectOption('email');
   await page.getByRole('button', { name: 'Edit search', exact: true }).click();
   const topic = page.getByLabel('Topic or keyword', { exact: true });

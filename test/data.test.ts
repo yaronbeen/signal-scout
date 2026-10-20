@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalPost, canonicalProfile, compareRelevance, contentSignals, creatorsFromPosts, discoverCandidates, enrichCreators, extractEmails, matchingTerms, mergeCreators, number, relevanceLabel, relevanceScore, searchPostUrls, toCsv, websiteContacts } from '../src/data';
+import { canonicalPost, canonicalProfile, compareRelevance, contentSignals, creatorsFromPosts, discoverCandidates, enrichCreators, extractEmails, filterCreators, matchingTerms, mergeCreators, number, relevanceLabel, relevanceScore, searchPostUrls, toCsv, websiteContacts } from '../src/data';
 import { sampleCreators } from '../src/sample';
 
 test('canonical identities deduplicate profiles and reject non-profile and deceptive URLs', () => {
@@ -124,7 +124,36 @@ test('CSV protects spreadsheet formulas and includes source provenance and sampl
   const creator = { ...sampleCreators[0], name: '=HYPERLINK("bad")', bio: 'A, quote " and\nnewline', followers: null };
   const csv = toCsv([creator]);
   assert.ok(csv.includes('"\'=HYPERLINK(""bad"")"')); assert.ok(csv.includes('A, quote "" and\nnewline'));
-  assert.ok(csv.includes('email_source')); assert.ok(csv.endsWith('"yes","sample"'));
+  assert.ok(csv.includes('email_source')); assert.ok(csv.endsWith('"yes","","sample"'));
+});
+test('audience ranges are inclusive, preserve unknowns only when unbounded, and reject invalid bounds', () => {
+  const creators = [null, 0, 1000, 10000, 10001].map((followers, i) => ({ ...sampleCreators[0], id: String(i), followers }));
+  const filters = { platform: 'all', query: '', emailOnly: false, minimum: null, maximum: null, topic: '', matchingPostOnly: false };
+  assert.equal(filterCreators(creators, filters).length, 5);
+  assert.deepEqual(filterCreators(creators, { ...filters, minimum: 1000, maximum: 10000 }).map(c => c.followers), [1000, 10000]);
+  assert.deepEqual(filterCreators(creators, { ...filters, maximum: 0 }).map(c => c.followers), [0]);
+  for (const [minimum, maximum] of [[-1, null], [NaN, null], [null, Infinity], [1.5, null], [10000, 1000]]) {
+    assert.equal(filterCreators(creators, { ...filters, minimum, maximum }).length, 0);
+  }
+});
+test('topic and post filters require the selected topic in collected content, not unrelated post evidence', () => {
+  const creator = { ...sampleCreators[0], matchedTerms: ['AI tools', 'automation'], evidence: [
+    { kind: 'profile' as const, url: sampleCreators[0].url, text: 'AI tools specialist' },
+    { kind: 'content' as const, url: sampleCreators[0].url, text: 'Automation tutorial' },
+  ] };
+  const filters = { platform: 'all', query: '', emailOnly: false, minimum: null, maximum: null, topic: 'AI TOOLS', matchingPostOnly: false };
+  assert.equal(filterCreators([creator], filters).length, 1);
+  assert.equal(filterCreators([creator], { ...filters, matchingPostOnly: true }).length, 0);
+  assert.equal(filterCreators([creator], { ...filters, topic: 'Automation', matchingPostOnly: true }).length, 1);
+  assert.equal(filterCreators([creator], { ...filters, topic: '', matchingPostOnly: true }).length, 1);
+  assert.equal(filterCreators([creator], { ...filters, platform: 'x' }).length, 0);
+});
+test('CSV exports separate shortlist notes with formula protection and multiline quoting', () => {
+  const creator = sampleCreators[0];
+  const csv = toCsv([creator], { [creator.id]: '=formula, "note"\nsecond line' });
+  assert.ok(csv.includes('"shortlist_note"'));
+  assert.ok(csv.includes('"\'=formula, ""note""\nsecond line"'));
+  assert.equal(Object.hasOwn(creator, 'note'), false);
 });
 test('CSV explicitly exports pending, partial, complete, unknown legacy and sample collection states', () => {
   const statuses = ['pending', 'partial', 'complete'] as const;

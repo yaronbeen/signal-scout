@@ -41,6 +41,8 @@ export function isCreator(value: unknown): value is Creator {
     ].every((k) => typeof c[k as keyof Creator] === "string") &&
     (c.followers === null || typeof c.followers === "number") &&
     typeof c.verified === "boolean" &&
+    (c.sample === undefined || typeof c.sample === 'boolean') &&
+    (c.enrichmentError === undefined || typeof c.enrichmentError === 'string') &&
     (c.profileStatus === undefined || ['pending', 'complete', 'partial'].includes(c.profileStatus)) &&
     Array.isArray(c.websites) &&
     c.websites.every((w) => typeof w === "string") &&
@@ -82,6 +84,26 @@ export function isConfig(value: unknown): value is SearchConfig {
 export function savedCreators(): Creator[] {
   const value = load<unknown>("shortlist", []);
   return Array.isArray(value) ? value.filter(isCreator) : [];
+}
+export function savedNotes(): Record<string, string> {
+  const value = load<unknown>('notes', {});
+  const entries = value && typeof value === 'object' && !Array.isArray(value) ? Object.entries(value) : [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(prefix + 'note:')) {
+        const name = key.slice(prefix.length);
+        entries.push([name.slice('note:'.length), load<unknown>(name, null)]);
+      }
+    }
+  } catch { /* Existing notes remain readable when storage enumeration is blocked. */ }
+  return Object.fromEntries(entries.filter(([id, note]) =>
+    id.length <= 2048 && typeof note === 'string' && note.length <= 2000,
+  ));
+}
+export function storeNote(id: string, note: string): boolean {
+  // Separate keys prevent another tab from overwriting unrelated creators' notes.
+  return id.length <= 2048 && note.length <= 2000 && store(`note:${id}`, note);
 }
 export function recentSearches(): SearchConfig[] {
   const value = load<unknown>("history", []);

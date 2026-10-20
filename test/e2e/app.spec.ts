@@ -9,10 +9,11 @@ test('topic-only search restores legacy research keywords and labels platform au
   if (test.info().project.name === 'mobile') await page.getByRole('combobox', {name: 'Filter by platform'}).selectOption('youtube');
   else await tabs.getByRole('button',{name:/YouTube/}).click();
   await expect(page.locator('.creator-card')).toHaveCount(2);
-  await expect(page.getByLabel('Minimum audience').getByRole('option',{name:'10K+ subscribers',exact:true})).toHaveCount(1);
+  await expect(page.locator('.audience-range legend')).toHaveText('Audience size · subscribers');
+  await page.getByLabel('Minimum audience').fill('10000');
   if (test.info().project.name === 'mobile') await page.getByRole('combobox', {name: 'Filter by platform'}).selectOption('x');
   else await tabs.getByRole('button',{name:/X/}).click();
-  await expect(page.getByLabel('Minimum audience').getByRole('option',{name:'10K+ followers',exact:true})).toHaveCount(1);
+  await expect(page.locator('.audience-range legend')).toHaveText('Audience size · followers');
   await page.getByRole('button',{name:'Recent searches',exact:true}).click();
   await page.getByRole('button',{name:/Legacy company label/}).click();
   await expect(page.getByLabel('Topic or keyword',{exact:true})).toHaveValue('ai ugc, marketing');

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { api, collect, CollectionFailedError, RequestError } from "./api";
-import { compareRelevance, creatorsFromPosts, discoverCandidates, enrichCreators, mergeCreators, searchPostUrls } from "./data";
+import { compareRelevance, creatorsFromPosts, discoverCandidates, enrichCreators, matchingTerms, mergeCreators, searchPostUrls } from "./data";
 import { currentResults, pendingJobs, store } from "./storage";
 import {
   platforms,
@@ -264,7 +264,9 @@ export function useSearch() {
           termWarning += ' · Post collection failed; discovered profiles preserved';
         }
         const authored = creatorsFromPosts(p, records, job.postUrls || [], config.keywords);
-        candidates = mergeCreators(candidates, authored).sort(compareRelevance).slice(0, config.depth);
+        candidates = mergeCreators(candidates, authored)
+          .map(c => ({ ...c, matchedTerms: matchingTerms(c, config.keywords) }))
+          .sort(compareRelevance).slice(0, config.depth);
         if (records.some(r => r.error)) termWarning += ' · Some posts could not be collected; profile candidates preserved';
         if (!candidates.length) {
           if (records.some(r => r.error))
